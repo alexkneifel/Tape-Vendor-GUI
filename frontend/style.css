@@ -1,0 +1,22 @@
+body {
+    font-family: monospace;
+    background-color: black;
+    color: #0ff; /* retro cyan / VFD look */
+    text-align: center;
+}
+
+button {
+    font-size: 2em;
+    margin: 20px;
+    padding: 20px;
+    background-color: #222;
+    color: #0ff;
+    border: 2px solid #0ff;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #0ff;
+    color: black;
+}
