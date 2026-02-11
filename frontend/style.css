@@ -1,22 +1,143 @@
-body {
-    font-family: monospace;
-    background-color: black;
-    color: #0ff; /* retro cyan / VFD look */
-    text-align: center;
+/* Reset and Base Styles */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: 'Share Tech Mono', monospace;
+    background-color: #1a1a1a;
+    background-image: radial-gradient(#222 10%, transparent 10%);
+    background-size: 20px 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #e0e0e0;
+    overflow: hidden;
 }
 
+.menu {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 25px;
+    width: 100%;
+}
+
+/* Original Retro Button Styling */
 button {
-    font-size: 2em;
-    margin: 20px;
-    padding: 20px;
-    background-color: #222;
-    color: #0ff;
-    border: 2px solid #0ff;
-    border-radius: 10px;
+    width: 90%;          
+    max-width: 800px;    
+    flex: 0 1 120px; /* Restored height/flex logic */
+    font-size: 2.2rem;   
+    text-transform: uppercase;
+    letter-spacing: 2px;
     cursor: pointer;
+    display: flex;       
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    
+    background-color: #333;
+    color: #ff9d00; /* Amber display color */
+    border: 3px solid #444;
+    border-radius: 6px;
+    
+    box-shadow: 0 8px 0 #111, 0 12px 20px rgba(0,0,0,0.5);
+    transition: all 0.1s;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
-button:hover {
-    background-color: #0ff;
-    color: black;
+/* Red LED Indicator Logic */
+button::after {
+    content: "";
+    width: 16px; 
+    height: 16px;
+    background-color: #400; /* Dim red (Off) */
+    border-radius: 50%;
+    margin-left: 25px;
+    border: 2px solid #222;
+    transition: background 0.1s, box-shadow 0.1s;
 }
+
+/* Hover & Active Effects */
+@media (hover: hover) {
+    button:hover {
+        background-color: #3d3d3d;
+        color: #ffb700;
+        border-color: #ff9d00;
+    }
+}
+
+button:active {
+    top: 4px; 
+    box-shadow: 0 2px 0 #111;
+}
+
+/* LED Glow on Press */
+button:active::after {
+    background-color: #ff0000; /* Bright Red */
+    box-shadow: 0 0 10px #ff0000;
+}
+
+/* Specific Accent Side-Bars */
+#directory { border-left: 12px solid #ff4400; }
+#auto      { border-left: 12px solid #00bbff; }
+#party     { border-left: 12px solid #00ff66; }
+#dev       { border-left: 12px solid #ffea00; }
+
+/* Dev Menu Panel Overrides */
+.dev-panel {
+    gap: 15px !important;
+}
+
+.dev-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: 90%;
+}
+
+.dev-btn {
+    height: 80px !important; /* Slightly shorter for the grid */
+    font-size: 1.2rem !important;
+    flex: none !important;
+}
+
+.dev-panel label {
+    color: #ffea00;
+    font-size: 1.5rem;
+}
+
+.dev-panel input {
+    background: #000;
+    border: 1px solid #ffea00;
+    color: #00ff66;
+    padding: 8px;
+    width: 70px;
+    font-family: 'Share Tech Mono';
+    text-align: center;
+    font-size: 1.5rem;
+}
+
+.exit-btn {
+    height: 60px !important;
+    border-left: 12px solid #ff4400 !important;
+    margin-top: 10px;
+    flex: none !important;
+}
+
+/* Directory Styles */
+.dir-controls { display: flex; gap: 10px; width: 90%; margin-bottom: 10px; }
+.dir-controls input { flex-grow: 1; background: #000; color: orange; border: 1px solid #444; padding: 10px; font-family: 'Share Tech Mono'; }
+#tapeContainer { width: 90%; height: 50vh; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+.tape-item { background: #222; border: 1px solid #444; padding: 15px; color: orange; display: flex; justify-content: space-between; align-items: center; }
+.tape-item.is-out { opacity: 0.4; border-style: dashed; order: -1; }
