@@ -7,6 +7,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
+
+    <div id="loader" class="overlay" style="display:none;">
+        <div class="cassette">
+            <div class="reel left-reel"></div>
+            <div class="reel right-reel"></div>
+            <div class="tape-body"></div>
+        </div>
+        <h2 id="loader-text" style="color: #ff9d00; margin-top: 20px;">MECHANISM ACTIVE...</h2>
+    </div>
+
     <div id="main-menu" class="menu">
         <div class="center">
             <button id="directory" onclick="navigateTo('directory-menu')">Directory</button>
@@ -14,6 +24,17 @@
             <button id="party" onclick="navigateTo('party-menu')">Party Mode</button>
             <button id="dev" onclick="navigateTo('dev-menu')">Dev Mode</button>
         </div>
+    </div>
+
+    <div id="directory-menu" class="menu" style="display: none;">
+        <div class="dir-controls">
+            <button onclick="navigateTo('main-menu')">BACK</button>
+            <input type="text" id="searchBar" onkeyup="filterList()" placeholder="SEARCH ARCHIVE...">
+            <button onclick="toggleView()">GRID</button>
+            <button onclick="openAddModal()">+</button>
+            <button onclick="startSlotMachine()">SLOT</button>
+        </div>
+        <div id="tapeContainer"></div>
     </div>
 
     <div id="dev-menu" class="menu" style="display: none;">
@@ -26,7 +47,7 @@
                 </div>
                 <div class="input-pair">
                     <label>Y </label>
-                    <input type="number" id="y-index" min="1" max="12" value="1">
+                    <input type="number" id="y-index" min="1" max="11" value="1">
                 </div>
             </div>
             <div class="dev-grid">
@@ -35,16 +56,52 @@
                 <button class="dev-btn" onclick="sendMovement('goto')">GO TO</button>
                 <button class="dev-btn" onclick="sendMovement('servo')">SERVO</button>
                 <button class="dev-btn" onclick="sendMovement('home')">HOME</button>
-                <button class="dev-btn" onclick="sendMovement('remove')">REMOVE</button>
+                <button class="dev-btn" onclick="openRemoveModal()">REMOVE CASSETTE</button>
             </div>
             <div style="margin-top: 10px;">
                 <label>X OFFSET </label>
                 <input type="number" id="x-offset" value="0.0" step="0.1">
-                <button class="dev-btn" style="width: 100px; height: 50px !important; display: inline-flex;" onclick="sendOffset()">SET</button>
+                <button class="dev-btn" style="width: 120px; height: 50px !important; display: inline-flex;" onclick="sendOffset()">SET</button>
             </div>
-            <button id="exit" class="exit-btn" onclick="navigateTo('main-menu')">EXIT</button>
+            <button onclick="navigateTo('main-menu')" class="exit-btn">EXIT</button>
         </div>
     </div>
+
+    <div id="modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <h1 id="m-title" style="color: #ff9d00; margin-bottom: 10px;"></h1>
+            <p id="m-artist" style="font-size: 1.4rem; margin-bottom: 20px;"></p>
+            <div id="m-actions" style="margin: 25px 0;"></div>
+            <button onclick="closeModal()" style="height: 60px; width: 100%; font-size: 1.2rem;">CLOSE</button>
+        </div>
+    </div>
+
+    <div id="addModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <h1 style="color:#ff9d00;">ADD CASSETTE</h1>
+    
+            <input id="newName" placeholder="NAME" style="width:100%; margin-bottom:15px; font-size:1.2rem;">
+            <input id="newArtist" placeholder="ARTIST" style="width:100%; margin-bottom:25px; font-size:1.2rem;">
+    
+            <div class="modal-btn-container">
+                <button onclick="submitNewCassette()">SAVE</button>
+                <button onclick="closeAddModal()">CANCEL</button>
+            </div>
+        </div>
+    </div>
+    
+
+        <!-- Add inside <body>, after your existing modals -->
+    <div id="removeModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <h1 style="color:#ff4400;">REMOVE CASSETTE</h1>
+            <input id="removeSearch" placeholder="SEARCH CASSETTE..." style="width:100%; margin-bottom:15px; font-size:1.2rem;" onkeyup="filterRemoveList()">
+            <div id="removeContainer" style="max-height: 50vh; overflow-y: auto;"></div>
+            <button onclick="closeRemoveModal()" style="height:60px; margin-top:10px;">CANCEL</button>
+        </div>
+    </div>
+
+    
     <script src="{{ url_for('static', filename='ui.js') }}"></script>
 </body>
 </html>

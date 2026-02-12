@@ -1,4 +1,4 @@
-/* Reset and Base Styles */
+/* --- RESET AND BASE STYLES --- */
 html, body {
     height: 100%;
     margin: 0;
@@ -7,137 +7,419 @@ html, body {
     background-color: #1a1a1a;
     background-image: radial-gradient(#222 10%, transparent 10%);
     background-size: 20px 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
     color: #e0e0e0;
     overflow: hidden;
 }
 
+/* --- MAIN MENU LAYOUT FIX --- */
 .menu {
     width: 100%;
     height: 100vh;
     display: flex;
     flex-direction: column;
+}
+
+#main-menu {
     justify-content: center;
     align-items: center;
 }
+
+#directory-menu {
+    justify-content: flex-start;
+    align-items: center;
+    padding-top: 20px;
+}
+
 
 .center {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 25px;
+    gap: 30px;
     width: 100%;
 }
 
-/* Original Retro Button Styling */
+/* --- BUTTON BASE --- */
 button {
-    width: 90%;          
-    max-width: 800px;    
-    flex: 0 1 120px; /* Restored height/flex logic */
-    font-size: 2.2rem;   
+    width: 70%;              /* narrower */
+    max-width: 600px;        /* cap size on big screens */
+    height: 110px;
+
+    font-size: 2.2rem;
     text-transform: uppercase;
     letter-spacing: 2px;
     cursor: pointer;
-    display: flex;       
+
+    display: flex;
     align-items: center;
-    justify-content: center;
-    position: relative;
-    
+    justify-content: center;  /* perfectly centered text */
+
     background-color: #333;
-    color: #ff9d00; /* Amber display color */
+    color: #ff9d00;
     border: 3px solid #444;
-    border-radius: 6px;
-    
-    box-shadow: 0 8px 0 #111, 0 12px 20px rgba(0,0,0,0.5);
+    border-radius: 8px;
+
+    box-shadow: 0 8px 0 #111;
     transition: all 0.1s;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
+
+    padding-left: 30px;       /* balances left accent */
+    padding-right: 60px;      /* space for LED */
+    box-sizing: border-box;
+    position: relative;
 }
 
-/* Red LED Indicator Logic */
+
+/* --- LED (FIXED POSITION INSIDE BUTTON) --- */
 button::after {
     content: "";
-    width: 16px; 
+    position: absolute;
+    right: 25px;
+    width: 16px;
     height: 16px;
-    background-color: #400; /* Dim red (Off) */
+    background-color: #400;
     border-radius: 50%;
-    margin-left: 25px;
     border: 2px solid #222;
     transition: background 0.1s, box-shadow 0.1s;
 }
 
-/* Hover & Active Effects */
-@media (hover: hover) {
-    button:hover {
-        background-color: #3d3d3d;
-        color: #ffb700;
-        border-color: #ff9d00;
-    }
+
+button {
+    position: relative;
 }
 
 button:active {
-    top: 4px; 
+    transform: translateY(4px);
     box-shadow: 0 2px 0 #111;
 }
 
-/* LED Glow on Press */
 button:active::after {
-    background-color: #ff0000; /* Bright Red */
+    background-color: #ff0000;
     box-shadow: 0 0 10px #ff0000;
 }
 
-/* Specific Accent Side-Bars */
+/* --- SIDE COLOR ACCENTS --- */
 #directory { border-left: 12px solid #ff4400; }
 #auto      { border-left: 12px solid #00bbff; }
 #party     { border-left: 12px solid #00ff66; }
 #dev       { border-left: 12px solid #ffea00; }
 
-/* Dev Menu Panel Overrides */
-.dev-panel {
-    gap: 15px !important;
+/* =========================
+   DIRECTORY HEADER FIX
+========================= */
+
+.dir-controls {
+    display: grid;
+    grid-template-columns: 90px 1fr 90px 70px 90px;
+    gap: 10px;
+    width: 95%;
+    margin-bottom: 15px;
+    height: 65px;
 }
+
+/* Smaller header buttons */
+.dir-controls button {
+    width: 100%;
+    height: 100%;
+    font-size: 1rem;
+    flex: none;
+    padding-right: 0;   /* 🔥 remove LED spacing */
+}
+
+/* Remove LED from header buttons */
+.dir-controls button::after {
+    display: none;
+}
+
+/* Make ADD button just "+" */
+.dir-controls button:nth-child(4) {
+    font-size: 2rem;
+}
+
+/* Prevent SLOT cutoff */
+.dir-controls button:nth-child(5) {
+    white-space: nowrap;
+}
+
+/* Search bar */
+.dir-controls input {
+    background: #000;
+    border: 2px solid #444;
+    color: #00ff66;
+    padding: 0 15px;
+    font-family: 'Share Tech Mono';
+    font-size: 1.2rem;
+}
+
+/* Tape list */
+#tapeContainer {
+    width: 95%;
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-bottom: 20px;
+}
+
+
+.tape-item {
+    background: #262626;
+    border: 2px solid #444;
+    padding: 20px;
+    color: #ff9d00;
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.4rem;
+    cursor: pointer;
+}
+
+.tape-item.is-out {
+    opacity: 0.3;
+    border-style: dashed;
+}
+
+/* --- OVERLAY & LOADER --- */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.95);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+/* Cassette loader container */
+.cassette {
+    position: relative;
+    width: 220px;
+    height: 120px;
+    background: #222;
+    border: 4px solid #ff9d00;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+/* Tape body */
+.tape-body {
+    position: absolute;
+    top: 50%;
+    left: 15%;
+    width: 70%;
+    height: 12px;
+    background: #444;
+    transform: translateY(-50%);
+    z-index: 1;
+    border-radius: 6px;
+}
+
+/* Reels */
+.reel {
+    width: 40px;  /* smaller */
+    height: 40px; /* smaller */
+    border: 4px solid #ff9d00;
+    border-radius: 50%;
+    background-color: #111;
+    position: relative;
+    z-index: 2;
+}
+
+/* Reel hub center */
+.reel::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 10px;  /* slightly smaller */
+    height: 10px; /* slightly smaller */
+    background: #ff9d00;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 3;
+}
+
+/* Reel notches */
+.reel::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 32px;  /* smaller to match reel */
+    height: 32px; /* smaller to match reel */
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    border: 2px dashed #ff9d00; /* makes notches look like holes */
+    animation: spin 1s linear infinite;
+}
+
+/* Spin animation for reels */
+@keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1001;
+}
+
+.modal-content {
+    background: #222;
+    border: 4px solid #ff9d00;
+    padding: 30px;
+    width: 85%;
+    max-width: 550px;
+    text-align: center;
+}
+
+/* --- DEV PANEL (unchanged layout, just safe sizing) --- */
+.dev-panel { gap: 10px !important; }
 
 .dev-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    width: 90%;
+    gap: 20px;
+    width: 50%;
+    justify-items: center;   /* center buttons inside each column */
+    align-items: center;
 }
+
 
 .dev-btn {
-    height: 80px !important; /* Slightly shorter for the grid */
+    width: 85%;
+    max-width: 250px;
+    height: 75px !important;
     font-size: 1.2rem !important;
+
+    display: flex;
+    justify-content: center;  /* center text horizontally */
+    align-items: center;      /* center text vertically */
+
     flex: none !important;
 }
 
-.dev-panel label {
-    color: #ffea00;
-    font-size: 1.5rem;
-}
 
-.dev-panel input {
-    background: #000;
-    border: 1px solid #ffea00;
-    color: #00ff66;
-    padding: 8px;
-    width: 70px;
-    font-family: 'Share Tech Mono';
-    text-align: center;
-    font-size: 1.5rem;
-}
+.dev-btn::after { display: none; }
 
 .exit-btn {
-    height: 60px !important;
-    border-left: 12px solid #ff4400 !important;
+    border-left: 12px solid #ffea00!important;
     margin-top: 10px;
+    height: 65px !important;
     flex: none !important;
 }
 
-/* Directory Styles */
-.dir-controls { display: flex; gap: 10px; width: 90%; margin-bottom: 10px; }
-.dir-controls input { flex-grow: 1; background: #000; color: orange; border: 1px solid #444; padding: 10px; font-family: 'Share Tech Mono'; }
-#tapeContainer { width: 90%; height: 50vh; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-.tape-item { background: #222; border: 1px solid #444; padding: 15px; color: orange; display: flex; justify-content: space-between; align-items: center; }
-.tape-item.is-out { opacity: 0.4; border-style: dashed; order: -1; }
+.modal-content input {
+    background: #000;
+    border: 2px solid #444;
+    color: #00ff66;
+    padding: 12px;
+    font-family: 'Share Tech Mono';
+}
+
+.remove-x {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+    background-color: #440000;
+    color: #ff0000;
+    border: 2px solid #ff0000;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.remove-x:hover {
+    background-color: #ff0000;
+    color: #fff;
+}
+
+/* Center buttons inside modal */
+.modal-btn-container {
+    display: flex;
+    justify-content: center;   /* centers horizontally */
+    gap: 20px;                 /* optional spacing if multiple buttons */
+    margin-top: 15px;
+}
+
+.modal-btn-container button {
+    min-width: 120px;          /* consistent width */
+    height: 50px;
+    font-size: 1.2rem;
+    background: #333;
+    color: #ff9d00;
+    border: 2px solid #444;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+#tapeContainer button {
+    border: 2px solid #444;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Share Tech Mono';
+    transition: all 0.1s;
+}
+
+#tapeContainer button:hover {
+    box-shadow: 0 0 6px #ff9d00;
+}
+
+/* Update your existing button::after or add this: */
+#tapeContainer button::after {
+    content: "";
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1px solid #000;
+    /* These variables are controlled by ui.js */
+    background-color: var(--led-color, #111);
+    box-shadow: var(--led-shadow, none);
+    transition: all 0.3s ease;
+}
+
+/* Ensure grid buttons show the LED correctly */
+.grid-btn::after {
+    background-color: var(--led-color, #400);
+    box-shadow: var(--led-shadow, none);
+    right: 8px !important; /* Move it closer to the edge for small grid buttons */
+    width: 10px;
+    height: 10px;
+}
+
+/* Optional: Pulse effect for the 'Active' LED */
+.led-on::after {
+    animation: led-flicker 2s infinite alternate;
+}
+
+@keyframes led-flicker {
+    from { opacity: 1; }
+    to { opacity: 0.7; }
+}
+
+
+
+
