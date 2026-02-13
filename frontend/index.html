@@ -8,15 +8,7 @@
 </head>
 <body>
 
-    <div id="loader" class="overlay" style="display:none;">
-        <div class="cassette">
-            <div class="reel left-reel"></div>
-            <div class="reel right-reel"></div>
-            <div class="tape-body"></div>
-        </div>
-        <h2 id="loader-text" style="color: #ff9d00; margin-top: 20px;">MECHANISM ACTIVE...</h2>
-    </div>
-
+    <!-- Main menu that we load into -->
     <div id="main-menu" class="menu">
         <div class="center">
             <button id="directory" onclick="navigateTo('directory-menu')">Directory</button>
@@ -26,17 +18,33 @@
         </div>
     </div>
 
+    <!-- Menu for the directory -->
     <div id="directory-menu" class="menu" style="display: none;">
         <div class="dir-controls">
             <button onclick="navigateTo('main-menu')">BACK</button>
-            <input type="text" id="searchBar" onkeyup="filterList()" placeholder="SEARCH ARCHIVE...">
+            
+            <div class="search-filter-container">
+                <input type="text" id="searchBar" onkeyup="filterList()" placeholder="SEARCH ARCHIVE...">
+                <select id="sortSelect" onchange="filterAndSortList()">
+                    <option value="name-asc" selected>Name A→Z</option>
+                    <option value="plays-asc"># of Plays ↑</option>
+                    <option value="plays-desc"># of Plays ↓</option>
+                    <option value="recent-desc">Recently Played ↓</option>
+                    <option value="recent-asc">Recently Played ↑</option>
+                </select>
+            </div>
+        
             <button onclick="toggleView()">GRID</button>
             <button onclick="openAddModal()">+</button>
             <button onclick="startSlotMachine()">SLOT</button>
+            <button onclick="openGenreModal()">GENRE</button>
         </div>
+        
+        <!-- scrollable list of cassettes -->
         <div id="tapeContainer"></div>
     </div>
 
+    <!-- Menu for the development -->
     <div id="dev-menu" class="menu" style="display: none;">
         <div class="center dev-panel">
             <h2 style="color: #ffea00;">> MANUAL_OVERRIDE</h2>
@@ -56,6 +64,7 @@
                 <button class="dev-btn" onclick="sendMovement('goto')">GO TO</button>
                 <button class="dev-btn" onclick="sendMovement('servo')">SERVO</button>
                 <button class="dev-btn" onclick="sendMovement('home')">HOME</button>
+                <button class="dev-btn" onclick="sendMovement('cancel')">CANCEL</button> 
                 <button class="dev-btn" onclick="openRemoveModal()">REMOVE CASSETTE</button>
             </div>
             <div style="margin-top: 10px;">
@@ -67,15 +76,18 @@
         </div>
     </div>
 
+    <!-- Modal that pops up when selecting a cassette-->
     <div id="modal" class="modal" style="display:none;">
         <div class="modal-content">
             <h1 id="m-title" style="color: #ff9d00; margin-bottom: 10px;"></h1>
             <p id="m-artist" style="font-size: 1.4rem; margin-bottom: 20px;"></p>
+            <div id="m-tags" style="color:#00ff66; margin-top:10px;"></div>
             <div id="m-actions" style="margin: 25px 0;"></div>
             <button onclick="closeModal()" style="height: 60px; width: 100%; font-size: 1.2rem;">CLOSE</button>
         </div>
     </div>
 
+    <!-- Modal that pops up when adding a new cassette-->
     <div id="addModal" class="modal" style="display:none;">
         <div class="modal-content">
             <h1 style="color:#ff9d00;">ADD CASSETTE</h1>
@@ -84,21 +96,43 @@
             <input id="newArtist" placeholder="ARTIST" style="width:100%; margin-bottom:25px; font-size:1.2rem;">
     
             <div class="modal-btn-container">
-                <button onclick="submitNewCassette()">SAVE</button>
+                <button onclick="submitNewCassette()">ADD CASSETTE</button>
                 <button onclick="closeAddModal()">CANCEL</button>
             </div>
         </div>
     </div>
-    
 
-        <!-- Add inside <body>, after your existing modals -->
+    <div id="genreModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <h1 style="color:#00ff66;">FILTER BY GENRE</h1>
+            
+            <div id="genreCheckboxes" style="text-align:left; margin:20px 0;"></div>
+            
+            <div class="modal-btn-container">
+                <button onclick="applyGenreFilter()">APPLY</button>
+                <button onclick="closeGenreModal()">CANCEL</button>
+            </div>
+        </div>
+    </div>
+    
     <div id="removeModal" class="modal" style="display:none;">
         <div class="modal-content">
             <h1 style="color:#ff4400;">REMOVE CASSETTE</h1>
             <input id="removeSearch" placeholder="SEARCH CASSETTE..." style="width:100%; margin-bottom:15px; font-size:1.2rem;" onkeyup="filterRemoveList()">
+            <button id="clearAllBtn" style="width:100%; margin-bottom:10px; background:#ff4400; color:#fff; font-size:1.2rem;" onclick="clearAllCassettes()">CLEAR ALL CASSETTES</button>
             <div id="removeContainer" style="max-height: 50vh; overflow-y: auto;"></div>
             <button onclick="closeRemoveModal()" style="height:60px; margin-top:10px;">CANCEL</button>
         </div>
+    </div>
+
+     <!-- Cassette loading animation-->
+    <div id="loader" class="overlay" style="display:none;">
+        <div class="cassette">
+            <div class="reel left-reel"></div>
+            <div class="reel right-reel"></div>
+            <div class="tape-body"></div>
+        </div>
+        <h2 id="loader-text" style="color: #ff9d00; margin-top: 20px;">MECHANISM ACTIVE...</h2>
     </div>
 
     

@@ -2,6 +2,13 @@ import sqlite3
 import os
 import math
 from datetime import datetime
+import requests
+import json
+import os
+
+LASTFM_API_KEY = os.getenv("LASTFM_API_KEY")
+
+BAD_TAGS = {"seen live", "favorites", "favorite", "awesome", "good"}
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "cassettes.db")
 
@@ -31,7 +38,8 @@ def init_db():
             last_played TIMESTAMP,
             in_machine INTEGER DEFAULT 1,
             slot_x INTEGER,
-            slot_y INTEGER
+            slot_y INTEGER,
+            tags TEXT DEFAULT '[]'  -- store tags as JSON array
         )
     ''')
     conn.commit()
@@ -47,22 +55,37 @@ def get_all_cassettes(sort_by="alpha"):
         sort_sql = "name ASC"
         if sort_by == "plays":
             sort_sql = "listens DESC"
+
         query = f"SELECT * FROM cassettes ORDER BY in_machine ASC, {sort_sql}"
         tapes = conn.execute(query).fetchall()
-        return [dict(t) for t in tapes]
+
+        result = []
+        for t in tapes:
+            tape_dict = dict(t)
+            try:
+                tape_dict["tags"] = json.loads(tape_dict["tags"])
+            except:
+                tape_dict["tags"] = []
+            result.append(tape_dict)
+
+        return result
     finally:
         conn.close()
 
 '''
-Increments the number of listens for that cassette.
+Helper function that marks a cassette as dispensed, increment listens,
+and update last_played timestamp.
 '''
-def increment_listens(tape_id):
-    conn = get_db_connection()
-    try:
-        conn.execute("UPDATE cassettes SET listens = listens + 1 WHERE id = ?", (tape_id,))
+def mark_dispensed(tape_id):
+    with get_db_connection() as conn:
+        conn.execute("""
+            UPDATE cassettes
+            SET in_machine = 0,
+                listens = listens + 1,
+                last_played = CURRENT_TIMESTAMP
+            WHERE id = ?
+        """, (tape_id,))
         conn.commit()
-    finally:
-        conn.close()
 
 '''
 Checks all the slots that are taken, and returns the (x,y) for the closest slot
@@ -92,29 +115,36 @@ def find_closest_empty_slot():
 
 '''
 Inserts a new cassette into the database.
+name, artist, genre, listens, last_played, in_machine, slot_x, slot_y
 '''
-def add_cassette(name, artist, target_slot=None):
+
+def add_cassette(name, artist, target_slot=None, tags=None):
     conn = get_db_connection()
     try:
         slot = target_slot
             
         if not slot:
             return None
-        
-        # DEBUG PRINT: Watch your terminal when you click save
+
+        tags_json = json.dumps(tags or [])
+
         print(f"SAVING TAPE: {name} TO SLOT: {slot[0]}, {slot[1]}")
 
         conn.execute(
-            "INSERT INTO cassettes (name, artist, slot_x, slot_y, in_machine) VALUES (?, ?, ?, ?, 1)",
-            (name, artist, slot[0], slot[1])
+            """INSERT INTO cassettes 
+               (name, artist, slot_x, slot_y, in_machine, tags) 
+               VALUES (?, ?, ?, ?, 1, ?)""",
+            (name, artist, slot[0], slot[1], tags_json)
         )
         conn.commit()
         return slot
+
     except Exception as e:
         print(f"CRITICAL DB ERROR: {e}")
         return None
     finally:
-        conn.close() # Now it is safe to close.
+        conn.close()
+
 
 '''
 Return cassette information based on its id
@@ -151,3 +181,82 @@ def delete_cassette(tape_id):
         conn.commit()
     finally:
         conn.close()
+
+'''
+Delete all cassettes from database.
+'''
+def delete_all_cassettes():
+    conn = get_db_connection()
+    try:
+        conn.execute("DELETE FROM cassettes")
+        conn.commit()
+    finally:
+        conn.close()
+
+'''
+Returns the generated tags
+'''
+def get_all_tags():
+    conn = get_db_connection()
+    try:
+        rows = conn.execute(
+            "SELECT DISTINCT json_each.value AS tag FROM cassettes, json_each(cassettes.tags)"
+        ).fetchall()
+        return [r["tag"] for r in rows]
+    finally:
+        conn.close()
+
+'''
+Generate tags with some filters applied
+'''
+def generate_tags(name, artist):
+    base_url = "https://ws.audioscrobbler.com/2.0/"
+
+    # 1️⃣ Try track tags
+    try:
+        r = requests.get(base_url, params={
+            "method": "track.gettoptags",
+            "artist": artist,
+            "track": name,
+            "api_key": LASTFM_API_KEY,
+            "format": "json"
+        }, timeout=5)
+
+        tags = extract_tags(r.json())
+        if tags:
+            return ensure_three(tags)
+    except:
+        pass
+
+    # 2️⃣ Fallback to artist tags
+    try:
+        r = requests.get(base_url, params={
+            "method": "artist.gettoptags",
+            "artist": artist,
+            "api_key": LASTFM_API_KEY,
+            "format": "json"
+        }, timeout=5)
+
+        tags = extract_tags(r.json())
+        if tags:
+            return ensure_three(tags)
+    except:
+        pass
+
+    return ["unknown", "misc", "unclassified"]
+
+
+def extract_tags(data):
+    tags = []
+    if "toptags" in data and "tag" in data["toptags"]:
+        for tag in data["toptags"]["tag"]:
+            name = tag["name"].lower()
+            count = int(tag.get("count", 0))
+            if count > 0 and name not in BAD_TAGS:
+                tags.append(name)
+    return tags
+
+def ensure_three(tags):
+    while len(tags) < 3:
+        tags.append("misc")
+    return tags[:3]

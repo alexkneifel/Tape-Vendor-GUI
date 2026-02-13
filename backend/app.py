@@ -7,7 +7,7 @@ app = Flask(__name__, template_folder="../frontend", static_folder="../frontend"
 # Hardware Command Map
 COMMANDS = {
     "home": 0x01, "pickup": 0x02, "dropoff": 0x03, "goto": 0x04,
-    "servo": 0x05, "offset": 0x07, "wait_sense": 0x08
+    "servo": 0x05, "offset": 0x07, "cancel": 0x08
 }
 
 '''
@@ -55,18 +55,17 @@ def get_tapes():
     return jsonify(db.get_all_cassettes())
 
 '''
-Sends move commands and count increment commands when a cassette is dispensed.
+Sends move commands to hardware.
 '''
 @app.route("/api/dispense")
 def dispense():
     tape_id = request.args.get('id')
     tape = db.get_tape_by_id(tape_id)
     if tape:
-        # 1. Update DB: Mark as OUT and increment play count
-        db.update_status(tape_id, 0)
-        db.increment_listens(tape_id)  # <-- Added this
+        # Single DB call handles everything
+        db.mark_dispensed(tape_id)
         
-        # 2. Hardware: Send move commands
+        # Hardware stuff...
         serial_comm.send_byte(COMMANDS["home"])
         serial_comm.send_byte(COMMANDS["pickup"])
         serial_comm.send_byte(tape['slot_x'])
@@ -74,6 +73,7 @@ def dispense():
         
         return jsonify(status="Dispensing...")
     return jsonify(status="Tape not found"), 404
+
 
 '''
 Adds a new cassette to the database.
@@ -85,6 +85,9 @@ def add_tape():
     data = request.get_json()
     name = data.get("name")
     artist = data.get("artist")
+    tags = data.get("tags")
+    if not tags:
+        tags = db.generate_tags(name, artist)
     
     target_slot = None
     if data.get("slotX") and data.get("slotY"):
@@ -105,10 +108,14 @@ def add_tape():
     if not name:
         return jsonify(status="Name required"), 400
 
+
     # Now we pass the found slot into the add_cassette function
-    slot = db.add_cassette(name, artist, target_slot)
+    slot = db.add_cassette(name, artist, target_slot, tags)
     
-    if not slot:
+    
+    if slot:
+        print(f"Added cassette '{name}' by '{artist}' at slot {slot} with tags {tags}")
+    else:
         return jsonify(status="Slot Occupied or Machine Full"), 400
 
     # Fetch the newly inserted cassette to return to UI
@@ -154,7 +161,28 @@ def remove_cassette():
     db.delete_cassette(tape_id)
     return jsonify(status="Removed")
 
+'''
+Remove all cassettes from the database.
+'''
+@app.route("/api/remove_all", methods=["DELETE"])
+def remove_all_cassettes():
+    try:
+        db.delete_all_cassettes()
+        return jsonify(status="All cassettes removed")
+    except Exception as e:
+        return jsonify(status=f"Error: {str(e)}"), 500
+    
+'''
+
+'''
+@app.route("/api/tags")
+def get_tags():
+    tags = db.get_all_tags()
+    return jsonify(tags)
+
+
 if __name__ == "__main__":
     db.init_db()
     # threaded=True helps prevent request blocking
     app.run(host="0.0.0.0", port=5000, debug=True, threaded=True)
+
