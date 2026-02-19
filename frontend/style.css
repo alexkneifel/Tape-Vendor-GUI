@@ -42,6 +42,25 @@ html, body {
     width: 100%;
 }
 
+.grid-layout {
+    display: grid !important;
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(11, 1fr);
+    
+    /* Centering logic */
+    margin: 0 auto;           /* Centers the grid block horizontally */
+    justify-content: center;  /* Centers the columns */
+    align-content: center;    /* Centers the rows */
+    
+    gap: 8px;
+    width: 100%;
+    max-width: none;        
+     /* Prevents the grid from becoming too wide on large screens */
+    height: calc(100vh - 150px);
+    box-sizing: border-box;  /* Ensures padding doesn't cause overflow */
+    padding: 0 10px;
+}
+
 /* =========================
    3. BUTTONS & LEDS
 ========================= */
@@ -100,7 +119,7 @@ button:active::after {
 /* Side color accents for main menu buttons */
 #directory { border-left: 12px solid #ff4400; }
 #auto      { border-left: 12px solid #00bbff; }
-#party     { border-left: 12px solid #00ff66; }
+#stats     { border-left: 12px solid #00ff66; }
 #dev       { border-left: 12px solid #ffea00; }
 
 /* LED overrides for tape/grid buttons */
@@ -116,20 +135,34 @@ button:active::after {
     transition: all 0.3s ease;
 }
 
+/* Update this section in your CSS */
 #tapeContainer button,
 .grid-btn,
 .dir-controls button {
     display: flex !important;
-    justify-content: center !important;  /* horizontal centering */
-    align-items: center !important;      /* vertical centering */
-    text-align: center;                   /* fallback */
-    line-height: normal !important;      /* prevent weird offsets */
-    padding: 0 !important;               /* remove extra spacing */
+    justify-content: center !important; /* Horizontal center */
+    align-items: center !important;     /* Vertical center */
+    text-align: center;
+    
+    /* Add these for better text handling */
+    padding: 5px !important;            /* Give text a little breathing room */
+    line-height: 1.1 !important;        /* Prevents text from being too tall */
+    word-break: break-word;             /* Wraps long names so they don't bleed out */
+    overflow: hidden;                   /* Keeps everything inside the box */
 }
 
 
 .grid-btn::after {
     width: 10px;
+}
+
+/* Add this to your CSS */
+.grid-btn:empty::before, 
+.grid-btn {
+    /* Ensures the "+" character alignment is clean */
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* LED flicker effect */
@@ -141,6 +174,16 @@ button:active::after {
     from { opacity: 1; }
     to { opacity: 0.7; }
 }
+
+#slotModal .modal-btn-container {
+    display: flex;
+    flex-direction: column;      /* stack buttons vertically */
+    align-items: center;         /* horizontal center */
+    justify-content: center;     /* vertical center in container */
+    gap: 15px;                   /* spacing between buttons */
+    width: 100%;
+}
+
 
 /* =========================
    4. DIRECTORY / TAPE LIST
@@ -262,10 +305,67 @@ button:active::after {
     box-shadow: 0 0 6px #ff9d00;
 }
 
+/* Container for all genre options */
+#genreCheckboxes {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 15px;
+    margin: 20px 0;
+    width: 100%;
+    max-height: 40vh; /* Prevents modal from getting too tall */
+    overflow-y: auto;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+/* Individual genre row */
+.genre-option {
+    display: flex;
+    align-items: center;
+    background: #111;
+    border: 1px solid #333;
+    padding: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+    user-select: none;
+}
+
+.genre-option:hover {
+    background: #222;
+    border-color: #00ff66;
+}
+
+/* The checkbox itself */
+.genre-option input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin-right: 12px;
+    cursor: pointer;
+    accent-color: #00ff66; /* Gives the checkmark your theme color */
+}
+
+/* The text label */
+.genre-option span {
+    font-size: 1.1rem;
+    color: #e0e0e0;
+    text-transform: uppercase;
+}
+
+
 /* =========================
    5. DEV PANEL
 ========================= */
-.dev-panel { gap: 10px !important; }
+.dev-panel {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;  /* vertical centering */
+    align-items: center !important;      /* horizontal centering */
+    width: 100% !important;
+    height: 100vh !important;
+    gap: 10px !important;
+}
+
 
 .dev-grid {
     display: grid;
@@ -276,25 +376,50 @@ button:active::after {
     align-items: center;
 }
 
+/* Update the dev-btn to override global button padding */
 .dev-btn {
-    width: 85%;
-    max-width: 250px;
-    height: 75px !important;
-    font-size: 1.2rem !important;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    margin: 0 auto !important;  /* centers horizontally in its container */
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center !important;
     flex: none !important;
+    font-size: 1.1rem !important;
+    padding: 0 !important;      /* remove leftover padding */
+    height: 60px !important;   /* Slightly shorter to save vertical space */
+    width: 100% !important;    /* Let the grid control the width */
 }
+
+.dev-panel input,
+.dev-grid input {
+    width: 120px;          /* make wider */
+    height: 50px;          /* make taller */
+    font-size: 1.5rem;     /* bigger text */
+    padding: 0 12px;       /* horizontal padding */
+    border: 2px solid #444;
+    border-radius: 6px;
+    background-color: #111;
+    color: #00ff66;
+    text-align: center;    /* center the number inside */
+    box-sizing: border-box; 
+}
+
 
 .dev-btn::after { display: none; }
-
+/* Ensure the EXIT button is also centered */
 .exit-btn {
-    border-left: 12px solid #ff0000!important;
+    border-left: 12px solid #ff0000 !important;
     margin-top: 10px;
     height: 65px !important;
+    
+    /* Center text and reset padding */
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 0 !important;
     flex: none !important;
 }
+
 
 /* =========================
    6. OVERLAYS / MODALS / LOADER
@@ -331,12 +456,19 @@ button:active::after {
     text-align: center;
 }
 
+.modal-content button {
+    width: 80%;
+    padding: 14px;
+}
+
 .modal-content input {
     background: #000;
     border: 2px solid #444;
     color: #00ff66;
-    padding: 12px;
+    padding: 12px 20px;  /* add more horizontal padding */
     font-family: 'Share Tech Mono';
+    width: 100%;
+    box-sizing: border-box;  /* include padding in width */
 }
 
 .modal-btn-container {
@@ -357,19 +489,49 @@ button:active::after {
     cursor: pointer;
 }
 
+.primary-btn {
+    flex: 2;
+    height: 80px;
+    font-size: 1.6rem;
+    background: #ff9d00;
+    border-left: 12px solid #ff4400;
+    color: #111;
+    border: 3px solid #ff9d00;
+}
+
+.primary-btn:hover {
+    box-shadow: 0 0 12px #ff9d00;
+}
+
+.secondary-btn {
+    flex: 1;
+    height: 60px;
+    font-size: 1rem;
+    background: #333;
+    color: #aaa;
+    border: 2px solid #444;
+}
+
+
+/* Specifically target the small removal buttons */
 .remove-x {
-    width: 40px;
-    height: 40px;
-    font-size: 1.2rem;
-    background-color: #440000;
-    color: #ff0000;
-    border: 2px solid #ff0000;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    flex-shrink: 0;
+    width: 90px !important;    /* Force a specific width */
+    height: 45px !important;   /* Force a specific height */
+    padding: 0 !important;      /* Remove centering padding */
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    
+    /* Reset the global button styles that might interfere */
+    max-width: none !important;
+    flex: none !important;
+    box-shadow: none !important;
+    border-radius: 50%;        /* Keeps it a perfect circle */
+}
+
+/* Ensure the text inside is centered and sized right */
+.remove-x::after {
+    display: none !important;   /* Hide the LED pseudo-element if it appears */
 }
 
 .remove-x:hover {

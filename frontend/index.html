@@ -13,7 +13,7 @@
         <div class="center">
             <button id="directory" onclick="navigateTo('directory-menu')">Directory</button>
             <button id="auto" onclick="navigateTo('auto-menu')">Auto-Organize</button>
-            <button id="party" onclick="navigateTo('party-menu')">Party Mode</button>
+            <button id="stats" onclick="navigateTo('stats-menu')">Listening Log</button>
             <button id="dev" onclick="navigateTo('dev-menu')">Dev Mode</button>
         </div>
     </div>
@@ -29,14 +29,14 @@
                     <option value="name-asc" selected>Name A→Z</option>
                     <option value="plays-asc"># of Plays ↑</option>
                     <option value="plays-desc"># of Plays ↓</option>
-                    <option value="recent-desc">Recently Played ↓</option>
-                    <option value="recent-asc">Recently Played ↑</option>
+                    <option value="recent-desc">Recent ↓</option>
+                    <option value="recent-asc">Recent ↑</option>
                 </select>
             </div>
         
             <button onclick="toggleView()">GRID</button>
             <button onclick="openAddModal()">+</button>
-            <button onclick="startSlotMachine()">SLOT</button>
+            <button onclick="openSlotModal()">RCG</button>
             <button onclick="openGenreModal()">GENRE</button>
         </div>
         
@@ -83,7 +83,6 @@
             <p id="m-artist" style="font-size: 1.4rem; margin-bottom: 20px;"></p>
             <div id="m-tags" style="color:#00ff66; margin-top:10px;"></div>
             <div id="m-actions" style="margin: 25px 0;"></div>
-            <button onclick="closeModal()" style="height: 60px; width: 100%; font-size: 1.2rem;">CLOSE</button>
         </div>
     </div>
 
@@ -124,6 +123,35 @@
             <button onclick="closeRemoveModal()" style="height:60px; margin-top:10px;">CANCEL</button>
         </div>
     </div>
+
+    <div id="slotModal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <h1 style="color:#00bbff;">RANDOM CASSETTE GENERATOR</h1>
+
+        <div class="modal-btn-container" style="flex-direction:column; gap:15px;">
+            <button class="primary-btn" onclick="startRandom('normal')">
+                PURE RANDOM
+            </button>
+
+            <button class="primary-btn" onclick="startRandom('favorite')">
+                CROWD FAVORITE
+            </button>
+
+            <button class="primary-btn" onclick="startRandom('neglected')">
+                NEGLECTED GEM
+            </button>
+
+            <button class="primary-btn" onclick="openGenreFromSlot()">
+                BY GENRE
+            </button>
+
+            <button class="secondary-btn" onclick="closeSlotModal()">
+                CANCEL
+            </button>
+        </div>
+    </div>
+</div>
+
 
      <!-- Cassette loading animation-->
     <div id="loader" class="overlay" style="display:none;">

@@ -3,6 +3,9 @@
 ========================= */
 let currentTapes = [];
 let isGrid = false; // Track current view mode (List/Grid)
+let genreMode = "filter"; 
+// "filter" = directory mode
+// "slot" = slot machine mode
 
 /* =========================
    1. NAVIGATION
@@ -83,48 +86,79 @@ function renderCurrentView()
 
 /**
  * Opens modal menu with the genre's
+ * @param {string} mode - "filter" or "slot"
  */
-async function openGenreModal() {
+async function openGenreModal(mode = "filter") {
+    genreMode = mode; // Set global variable to track behavior
+
+    if (genreMode === "filter") {
+        renderCurrentView(); 
+    }
+
     try {
         const res = await fetch("/api/tags");
-        if (!res.ok) throw new Error("Server returned " + res.status);
         const tags = await res.json();
+
         const container = document.getElementById("genreCheckboxes");
         container.innerHTML = "";
+
         tags.forEach(tag => {
-            const div = document.createElement("div");
-            div.innerHTML = `<input type="checkbox" value="${tag}"> ${tag}`;
-            container.appendChild(div);
+            const label = document.createElement("label");
+            label.className = "genre-option";
+            label.innerHTML = `
+                <input type="checkbox" value="${tag}">
+                <span>${tag}</span>
+            `;
+            container.appendChild(label);
         });
+
         document.getElementById("genreModal").style.display = "flex";
     } catch (err) {
         console.error("Failed to load genres:", err);
-        alert("Could not load genres. Check console.");
     }
 }
+
+/**
+ * Filter the list OR pick a random tape based on current genreMode
+ */
+function applyGenreFilter() {
+    const checkedGenres = [...document.querySelectorAll("#genreCheckboxes input:checked")]
+        .map(cb => cb.value);
+
+    if (checkedGenres.length === 0) {
+        alert("Please select at least one genre.");
+        return;
+    }
+
+    // Filter currentTapes to only those that include at least one selected genre
+    const filtered = currentTapes.filter(t =>
+        t.tags && t.tags.some(tag => checkedGenres.includes(tag))
+    );
+
+    closeGenreModal();
+
+    if (genreMode === "slot") {
+        // SLOT MODE: Pick a random one from the filtered pool
+        if (filtered.length > 0) {
+            const chosen = filtered[Math.floor(Math.random() * filtered.length)];
+            runSlotAnimation(chosen);
+        } else {
+            alert("No cassettes found for those genres.");
+        }
+    } else {
+        // FILTER MODE: Just update the directory view
+        renderList(filtered);
+    }
+}
+
 
 
 function closeGenreModal() {
     document.getElementById("genreModal").style.display = "none";
 }
 
-/**
- * Filter the list based on the genre's
- */
-function applyGenreFilter() {
-    const checked = [...document.querySelectorAll("#genreCheckboxes input:checked")].map(cb => cb.value);
 
-    const filtered = currentTapes
-        .map(t => {
-            const matchCount = t.tags ? t.tags.filter(tag => checked.includes(tag)).length : 0;
-            return {...t, matchCount};
-        })
-        .filter(t => t.matchCount > 0)
-        .sort((a,b) => b.matchCount - a.matchCount);
 
-    renderList(filtered);
-    closeGenreModal();
-}
 
 /* =========================
    4. VIEW RENDERING
@@ -160,7 +194,7 @@ function renderList(tapes) {
 /**
  * Render the grid view of tapes (5x11 grid)
  */
-function renderGrid() 
+function renderGrid(tapes = currentTapes) 
 {
     const container = document.getElementById('tapeContainer');
     container.innerHTML = '';
@@ -175,6 +209,8 @@ function renderGrid()
     grid.style.height = 'calc(100vh - 120px)';
     grid.style.gap = '8px';
     grid.style.width = '95%';
+    grid.style.justifyContent = 'center';               
+
 
     for (let row = 0; row < 11; row++) {
         for (let col = 0; col < 5; col++) {
@@ -183,7 +219,7 @@ function renderGrid()
             // When row is 0 (top of screen), Y is 11. When row is 10 (bottom), Y is 1.
             const currentY = 11 - row; 
 
-            const tapeAtPos = currentTapes.find(t => 
+            const tapeAtPos = tapes.find(t => 
                 parseInt(t.slot_x) === currentX && 
                 parseInt(t.slot_y) === currentY
             );
@@ -263,14 +299,27 @@ function openModal(tape)
     const actions = document.getElementById('m-actions');
     
     if (tape.in_machine) {
-        actions.innerHTML = `<div class="modal-btn-container">
-                                <button onclick="actionTape(${tape.id}, 'dispense')">DISPENSE</button>
-                             </div>`;
-    } else {
-        actions.innerHTML = `<div class="modal-btn-container">
-                                <button onclick="actionTape(${tape.id}, 'return')">RETURN</button>
-                             </div>`;
-    }
+    actions.innerHTML = `
+        <div class="modal-btn-container">
+            <button class="primary-btn" onclick="actionTape(${tape.id}, 'dispense')">
+                DISPENSE
+            </button>
+            <button class="secondary-btn" onclick="closeModal()">
+                CLOSE
+            </button>
+        </div>`;
+} else {
+    actions.innerHTML = `
+        <div class="modal-btn-container">
+            <button class="primary-btn" onclick="actionTape(${tape.id}, 'return')">
+                RETURN
+            </button>
+            <button class="secondary-btn" onclick="closeModal()">
+                CLOSE
+            </button>
+        </div>`;
+}
+
     document.getElementById('modal').style.display = 'flex';
 }
 
@@ -597,3 +646,95 @@ async function clearAllCassettes() {
         console.error(e);
     }
 }
+
+/**
+ * Open slot machine window.
+ */
+function openSlotModal() {
+    document.getElementById("slotModal").style.display = "flex";
+}
+
+/**
+ * Close slot machine window.
+ */
+function closeSlotModal() {
+    document.getElementById("slotModal").style.display = "none";
+}
+
+/**
+ * Return a weighted random tape from an array of tapes.
+ * @param {Array} tapes - Array of tape objects
+ * @param {Function} weightFn - Function that returns a weight for each tape
+ * @returns {Object} - The selected tape
+ */
+function weightedRandom(tapes, weightFn) {
+    const weights = tapes.map(weightFn);
+    const totalWeight = weights.reduce((a,b) => a + b, 0);
+
+    let random = Math.random() * totalWeight;
+
+    for (let i = 0; i < tapes.length; i++) {
+        if (random < weights[i]) return tapes[i];
+        random -= weights[i];
+    }
+}
+
+/**
+ * shows the slot machine animation and selects a tape based on the type of randomization chosen by the user.
+ * @param {string} type - 'normal' for pure random, 'favorite' for weighted towards most played, 'neglected' for weighted towards least played 
+ * @returns 
+ */
+function startRandom(type) {
+    closeSlotModal();
+
+    if (!currentTapes.length) return;
+
+    let chosen;
+
+    switch(type) {
+
+        case 'normal':
+            chosen = currentTapes[Math.floor(Math.random() * currentTapes.length)];
+            break;
+
+        case 'favorite':
+            chosen = weightedRandom(currentTapes, t => (t.listens || 0) + 1);
+            break;
+
+        case 'neglected':
+            chosen = weightedRandom(currentTapes, t => 1 / ((t.listens || 0) + 1));
+            break;
+    }
+
+    runSlotAnimation(chosen);
+}
+
+
+function openGenreFromSlot() {
+    closeSlotModal();
+    openGenreModal("slot"); // pass mode
+}
+
+/**
+ * 
+ * @param {*} finalTape 
+ */
+function runSlotAnimation(finalTape) {
+
+    showLoader("SPINNING...");
+
+    const spinInterval = setInterval(() => {
+        const randomTape = currentTapes[
+            Math.floor(Math.random() * currentTapes.length)
+        ];
+        document.getElementById("loader-text").innerText = randomTape.name;
+    }, 100);
+
+    setTimeout(() => {
+        clearInterval(spinInterval);
+        hideLoader();
+        openModal(finalTape);
+    }, 2500);
+}
+
+

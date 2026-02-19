@@ -218,7 +218,7 @@ def generate_tags(name, artist):
             "method": "track.gettoptags",
             "artist": artist,
             "track": name,
-            "api_key": LASTFM_API_KEY,
+            "api_key": "73a2511c0d9cc4cdd4a3231bf58fad11",
             "format": "json"
         }, timeout=5)
 
@@ -233,7 +233,7 @@ def generate_tags(name, artist):
         r = requests.get(base_url, params={
             "method": "artist.gettoptags",
             "artist": artist,
-            "api_key": LASTFM_API_KEY,
+            "api_key": "73a2511c0d9cc4cdd4a3231bf58fad11",
             "format": "json"
         }, timeout=5)
 
