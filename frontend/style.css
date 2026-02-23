@@ -518,11 +518,11 @@ button:active::after {
     font-size: clamp(0.7rem, 2vw, 1.2rem);
 }
 
-.dev-panel input {
-    width: 100%;
-    height: 100%;
-    font-size: clamp(0.8rem, 2vw, 1.5rem);
-    padding: 0 4px;
+/* Targets number input spinners */
+.dev-panel input[type="number"]::-webkit-inner-spin-button {
+    width: 32px;   /* make the arrows bigger */
+    height: 32px;  /* taller for finger taps */
+    margin: 0 2px; /* optional spacing */
 }
 
 .dev-grid input {
