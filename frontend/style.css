@@ -588,9 +588,13 @@ button:active::after {
 }
 
 .modal-content button {
-    width: 100% !important;        /* fill modal width */
-    max-width: 100% !important;    /* prevent global max-width interference */
-    padding: 10px 15px !important; /* reduce side padding */
+    width: 100% !important;
+    max-width: 100% !important;
+
+    min-width: 0 !important;   /* 🔥 CRITICAL */
+    flex-shrink: 1 !important; /* allow shrinking */
+
+    padding: 10px 15px !important;
     box-sizing: border-box;
 }
 
