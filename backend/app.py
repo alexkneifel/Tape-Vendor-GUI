@@ -4,6 +4,10 @@ import db
 import threading
 import subprocess
 import time
+import shutil
+import os
+
+KIOSK_PROFILE = "/tmp/kiosk_profile"
 
 app = Flask(__name__, template_folder="../frontend", static_folder="../frontend", static_url_path="")
 
@@ -189,20 +193,25 @@ if __name__ == "__main__":
     db.init_db()
     # threaded=True helps prevent request blocking
     def start_kiosk():
-        # Give the server a second to start
-        time.sleep(1)
-    subprocess.Popen([
-        "chromium",
-        "--kiosk",
-        "--incognito",
-        "--noerrdialogs",
-        "--disable-session-crashed-bubble",
-        "--disable-infobars",
-        "--disable-gpu",
-        "--disable-software-rasterizer",
-        "--user-data-dir=/tmp/kiosk_profile",  # <-- NEW
-        "http://127.0.0.1:5000"
-    ])
+        # Remove old profile to force a fresh session
+        if os.path.exists(KIOSK_PROFILE):
+            shutil.rmtree(KIOSK_PROFILE)
+
+        time.sleep(1)  # wait for server to start
+
+        subprocess.Popen([
+            "chromium",
+            "--kiosk",
+            "--incognito",
+            "--noerrdialogs",
+            "--disable-session-crashed-bubble",
+            "--disable-infobars",
+            "--disable-gpu",
+            "--disable-software-rasterizer",
+            f"--user-data-dir={KIOSK_PROFILE}",
+            "http://127.0.0.1:5000"
+        ])
+
 
     # Start Chromium in a separate thread
     threading.Thread(target=start_kiosk).start()
