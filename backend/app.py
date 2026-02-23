@@ -1,6 +1,9 @@
 from flask import Flask, render_template, request, jsonify
 import serial_comm
 import db
+import threading
+import subprocess
+import time
 
 app = Flask(__name__, template_folder="../frontend", static_folder="../frontend", static_url_path="")
 
@@ -185,5 +188,22 @@ def get_tags():
 if __name__ == "__main__":
     db.init_db()
     # threaded=True helps prevent request blocking
+    def start_kiosk():
+        # Give the server a second to start
+        time.sleep(1)
+        subprocess.Popen([
+            "chromium",  # or "chromium-browser" if that works on your Pi
+            "--kiosk",
+            "--incognito",
+            "--noerrdialogs",
+            "--disable-session-crashed-bubble",
+            "--disable-infobars",
+            "--disable-gpu",
+            "--disable-software-rasterizer",
+            "http://127.0.0.1:5000"
+        ])
+
+    # Start Chromium in a separate thread
+    threading.Thread(target=start_kiosk).start()
     app.run(host="0.0.0.0", port=5000, debug=True, threaded=True)
 
