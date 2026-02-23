@@ -49,25 +49,19 @@ html, body {
 
 .grid-layout {
     display: grid !important;
-    grid-template-columns: repeat(5, 1fr);
-    grid-template-rows: repeat(11, 1fr);
+    grid-template-columns: repeat(5, 1fr);       /* 5 columns */
+    grid-template-rows: repeat(11, 1fr);         /* 11 rows */
+    gap: 0.8vh;                                  /* space between buttons */
     
-    /* FIX: Tighten the gap to give more room for the buttons themselves */
-    gap: 6px; 
-    
-    /* FIX: Ensure the grid takes up the full width and remaining height */
     width: 100%;
-    max-width: 100%;
-    flex: 1; 
-    min-height: 0; 
+    height: 100%;                                /* fill parent height */
     
-    /* FIX: Remove auto margins and use padding for the "Tube" border look */
-    margin: 0;
-    padding: 10px;
+    margin: 0 auto;                              /* horizontally center grid */
+    padding: 0.5vh;                              /* optional inner padding */
+    
     box-sizing: border-box;
 
-    /* This ensures buttons stretch to fill their grid cells perfectly */
-    justify-items: stretch;
+    justify-items: stretch;                       /* stretch each button to fill cell */
     align-items: stretch;
 }
 
@@ -145,7 +139,6 @@ button:active::after {
 
 /* Update this section in your CSS */
 #tapeContainer button,
-.grid-btn,
 .dir-controls button {
     display: flex !important;
     justify-content: center !important; /* Horizontal center */
@@ -163,6 +156,14 @@ button:active::after {
 .grid-btn {
     /* Reset but maintain box model */
     all: unset;
+    box-sizing: border-box;
+
+    width: 100%;       /* fill cell width */
+    height: 100%;      /* fill cell height */
+    min-width: 0;      /* prevents overflow */
+    min-height: 0;     /* prevents overflow */
+    
+    padding: 5px;      /* keep text padding */
     box-sizing: border-box;
     
     /* Centering logic */
@@ -337,7 +338,9 @@ button:active::after {
 
 
 #tapeContainer {
-    width: 95%;
+    width: 100%;
+    height: 100%;
+    overflow: hidden; /* Prevents the whole page from scrolling */
     flex: 1; /* Takes up all remaining vertical space */
     overflow-y: auto; /* Only this part scrolls */
     display: flex;
@@ -479,9 +482,14 @@ button:active::after {
    5. DEV PANEL
 ========================= */
 .dev-panel {
-    justify-content: space-evenly !important; /* Spreads elements within the height */
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    grid-auto-rows: minmax(40px, 1fr);
+    gap: 5px;
+    width: 95%;
     height: 100%;
-    padding: 20px 0;
+    padding: 5px;
+    box-sizing: border-box;
 }
 
 
@@ -494,11 +502,18 @@ button:active::after {
 
 /* Update the dev-btn to override global button padding */
 .dev-btn {
-    height: 8vh !important; /* Scaled height */
-    min-height: 45px !important;
+    width: 100%;
+    height: 100%;
+    font-size: clamp(0.7rem, 2vw, 1.2rem);
 }
 
-.dev-panel input,
+.dev-panel input {
+    width: 100%;
+    height: 100%;
+    font-size: clamp(0.8rem, 2vw, 1.5rem);
+    padding: 0 4px;
+}
+
 .dev-grid input {
     width: 120px;          /* make wider */
     height: 50px;          /* make taller */
