@@ -17,7 +17,7 @@ html, body {
    2. LAYOUT
 ========================= */
 .menu {
-    width: 100%;
+    width: 70vh;
     height: 100vh;
     display: flex;
     flex-direction: column;
@@ -39,7 +39,7 @@ html, body {
     flex-direction: column;
     align-items: center;
     gap: 30px;
-    width: 100%;
+    width: 90vw;
 }
 
 .grid-layout {
@@ -65,7 +65,7 @@ html, body {
    3. BUTTONS & LEDS
 ========================= */
 button {
-    width: 70%;
+    width: 70vw;
     max-width: 600px;
     height: 110px;
 
@@ -101,7 +101,7 @@ button::after {
     width: 16px;
     height: 16px;
     background-color: #400;
-    border-radius: 50%;
+    border-radius: 50vw;
     border: 2px solid #222;
     transition: background 0.1s, box-shadow 0.1s;
 }
@@ -209,7 +209,7 @@ button:active::after {
     display: grid;
     grid-template-columns: 90px 1fr 90px 70px 90px 90px;
     gap: 10px;
-    width: 95%;
+    width: 95vw;
     margin-bottom: 15px;
     height: 65px;
 }
@@ -422,7 +422,7 @@ button:active::after {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px;
-    width: 50%;
+    width: 50vw;
     justify-items: center;
     align-items: center;
 }
