@@ -52,18 +52,23 @@ html, body {
     grid-template-columns: repeat(5, 1fr);
     grid-template-rows: repeat(11, 1fr);
     
-    /* Centering logic */
-    margin: 0 auto;           /* Centers the grid block horizontally */
-    justify-content: center;  /* Centers the columns */
-    align-content: center;    /* Centers the rows */
+    /* FIX: Tighten the gap to give more room for the buttons themselves */
+    gap: 6px; 
     
-    gap: 8px;
+    /* FIX: Ensure the grid takes up the full width and remaining height */
     width: 100%;
-    max-width: none;        
-     /* Prevents the grid from becoming too wide on large screens */
-    height: calc(100vh - 150px);
-    box-sizing: border-box;  /* Ensures padding doesn't cause overflow */
-    padding: 0 10px;
+    max-width: 100%;
+    flex: 1; 
+    min-height: 0; 
+    
+    /* FIX: Remove auto margins and use padding for the "Tube" border look */
+    margin: 0;
+    padding: 10px;
+    box-sizing: border-box;
+
+    /* This ensures buttons stretch to fill their grid cells perfectly */
+    justify-items: stretch;
+    align-items: stretch;
 }
 
 /* =========================
@@ -154,37 +159,54 @@ button:active::after {
     overflow: hidden;                   /* Keeps everything inside the box */
 }
 
-/* 1. Fix the LED position on Grid Buttons */
-#tapeContainer button::after,
-.grid-btn::after {
-    position: absolute;
-    top: 5px;        /* Move it to the top corner */
-    right: 5px;      /* Keep it in the right corner */
-    
-    width: 8px;      /* Make it slightly smaller for grid view */
-    height: 8px;
-    
-    content: "";
-    border-radius: 50%;
-    border: 1px solid #000;
-    background-color: var(--led-color, #111);
-    box-shadow: var(--led-shadow, none);
-}
-
 /* 2. Prevent the text from touching the LED */
 .grid-btn {
-    position: relative;
-    padding: 12px 5px 5px 5px !important; /* Extra padding at the top for the LED */
+    /* Reset but maintain box model */
+    all: unset;
+    box-sizing: border-box;
+    
+    /* Centering logic */
     display: flex !important;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
+    text-align: center;
+    position: relative;
+    
+    /* Visuals */
+    background-color: #222;
+    border: 1px solid #444;
+    color: #ff9d00;
+    font-family: 'Share Tech Mono';
+    
+    /* Scale font so it stays on one line usually */
+    font-size: clamp(0.6rem, 1.4vh, 0.9rem); 
     line-height: 1.1;
-    font-size: 0.7rem; /* Keep font small so it fits */
+    padding: 5px;
+    cursor: pointer;
+    overflow: hidden;
+    word-break: break-word;
+    
+    /* Subtly rounded corners for the cassette feel */
+    border-radius: 2px;
+    transition: background 0.1s, border-color 0.1s;
 }
 
+/* Perfect LED positioning in the corner */
 .grid-btn::after {
-    width: 10px;
+    content: "";
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: clamp(4px, 0.8vh, 8px);
+    height: clamp(4px, 0.8vh, 8px);
+    border-radius: 50%;
+    background-color: var(--led-color, #111);
+    border: 1px solid #000;
+}
+
+.grid-btn:hover {
+    background-color: #333;
+    border-color: #ff9d00;
 }
 
 /* Add this to your CSS */
@@ -194,6 +216,17 @@ button:active::after {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.grid-btn:empty {
+    background-color: rgba(255, 255, 255, 0.02);
+    border: 1px dashed #333;
+}
+
+/* If you use a "+" for empty slots */
+.grid-btn.is-empty {
+    color: #444;
+    font-size: 1.2rem;
 }
 
 /* LED flicker effect */
