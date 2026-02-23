@@ -550,18 +550,20 @@ button:active::after {
     margin-top: auto; /* Pushes it to bottom but stays within container */
 }
 
+.input-pair {
+    display: flex;
+    flex-direction: column;   /* stack label on top of input */
+    align-items: center;      /* center horizontally */
+    gap: 8px;                 /* space between label and input */
+}
+
 .input-pair input[type="number"] {
     width: 100px;          /* wider so numbers aren’t cramped */
     height: 100px;         /* taller for finger taps */
     font-size: 3rem;    /* bigger text */
     padding: 0 12px;      /* horizontal padding for comfort */
-    box-sizing: border-box;
-    
-    display: flex;
-    flex-direction: column;   /* stack label on top of input */
-    align-items: center;      /* center horizontally */
-    gap: 8px;    
-    
+    box-sizing: border-box;  
+
     /* Optional visuals to match your theme */
     background-color: #111;
     border: 2px solid #444;
