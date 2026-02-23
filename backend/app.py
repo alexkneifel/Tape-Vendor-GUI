@@ -191,17 +191,18 @@ if __name__ == "__main__":
     def start_kiosk():
         # Give the server a second to start
         time.sleep(1)
-        subprocess.Popen([
-            "chromium",  # or "chromium-browser" if that works on your Pi
-            "--kiosk",
-            "--incognito",
-            "--noerrdialogs",
-            "--disable-session-crashed-bubble",
-            "--disable-infobars",
-            "--disable-gpu",
-            "--disable-software-rasterizer",
-            "http://127.0.0.1:5000"
-        ])
+    subprocess.Popen([
+        "chromium",
+        "--kiosk",
+        "--incognito",
+        "--noerrdialogs",
+        "--disable-session-crashed-bubble",
+        "--disable-infobars",
+        "--disable-gpu",
+        "--disable-software-rasterizer",
+        "--user-data-dir=/tmp/kiosk_profile",  # <-- NEW
+        "http://127.0.0.1:5000"
+    ])
 
     # Start Chromium in a separate thread
     threading.Thread(target=start_kiosk).start()
