@@ -588,8 +588,10 @@ button:active::after {
 }
 
 .modal-content button {
-    width: 80%;
-    padding: 14px;
+    width: 100% !important;        /* fill modal width */
+    max-width: 100% !important;    /* prevent global max-width interference */
+    padding: 10px 15px !important; /* reduce side padding */
+    box-sizing: border-box;
 }
 
 .modal-content input {

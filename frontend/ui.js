@@ -617,7 +617,7 @@ async function submitNewCassette()
         alert("Network error");
     } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = "ADD CASSETTE";
+        submitBtn.textContent = "ADD";
     }
 }
 
