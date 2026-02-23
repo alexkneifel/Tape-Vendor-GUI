@@ -246,42 +246,11 @@ button:active::after {
     to { opacity: 0.7; }
 }
 
-#slotModal .modal-content {
-    width: 95%;
-    max-width: 420px;   /* smaller cap for small screens */
-    padding: 16px;
-    overflow: hidden;   /* prevent any bleed */
-}
-
-/* Force vertical stacking properly */
 #slotModal .modal-btn-container {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+    margin-top: 10px;
+    height: 20%;
+    gap: 10px !important;
     width: 100%;
-}
-
-/* Fully isolate buttons */
-#slotModal .modal-btn-container button {
-    all: unset;
-    box-sizing: border-box;
-
-    width: 100%;
-    max-width: 100%;
-
-    padding: 12px 10px;
-    min-height: 50px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    font-family: 'Share Tech Mono';
-    font-size: clamp(0.85rem, 3vw, 1.1rem);
-    text-align: center;
-
-    border-radius: 6px;
-    cursor: pointer;
 }
 
 
