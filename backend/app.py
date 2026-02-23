@@ -7,7 +7,7 @@ app = Flask(__name__, template_folder="../frontend", static_folder="../frontend"
 # Hardware Command Map
 COMMANDS = {
     "home": 0x01, "pickup": 0x02, "dropoff": 0x03, "goto": 0x04,
-    "servo": 0x05, "offset": 0x07, "cancel": 0x08
+    "servo": 0x05, "offset": 0x06, "cancel": 0x07, "remove" : 0x08
 }
 
 '''
@@ -20,32 +20,31 @@ def home():
 '''
 Routes serial move commands.
 '''
-@app.route("/api/move")
-def move_hardware():
+@app.route("/api/srl_cmd")
+def send_cmd():
     action = request.args.get('action')
     x = request.args.get('x', '1')
     y = request.args.get('y', '1')
     
     if action in COMMANDS:
         serial_comm.send_byte(COMMANDS[action])
-        if action in ["pickup", "dropoff", "goto"]:
-            serial_comm.send_byte(int(x))
-            serial_comm.send_byte(int(y))
+        if action in ["pickup", "dropoff", "goto", "remove"]:
+            if 0 < int(x) < 6 and 0 < int(y) < 12:
+                serial_comm.send_byte(int(x))
+                serial_comm.send_byte(int(y))
+            else:
+                return jsonify(status="Invalid slot coordinates"), 400
+        elif action == "offset":
+            try:
+                offset_val = float(request.args.get('val', '0.0'))*10
+                if 0 < offset_val < 50: 
+                    serial_comm.send_byte(int(offset_val))
+                else:
+                    return jsonify(status="Offset out of bounds"), 400
+            except ValueError:
+                return jsonify(status="Invalid offset value"), 400
         return jsonify(status=f"Executed {action}")
     return jsonify(status="Invalid Command"), 400
-
-'''
-Routes serial offset commands.
-'''
-@app.route("/api/offset")
-def set_offset():
-    try:
-        val = float(request.args.get('val', '0.0'))
-        serial_comm.send_byte(COMMANDS["offset"])
-        serial_comm.send_float(val)
-        return jsonify(status=f"Offset {val} set")
-    except:
-        return jsonify(status="Invalid decimal"), 400
 
 '''
 Returns JSON of all cassettes in database.
@@ -173,12 +172,14 @@ def remove_all_cassettes():
         return jsonify(status=f"Error: {str(e)}"), 500
     
 '''
-
+Returns the genre tags in the machine.
 '''
 @app.route("/api/tags")
 def get_tags():
     tags = db.get_all_tags()
     return jsonify(tags)
+
+
 
 
 if __name__ == "__main__":

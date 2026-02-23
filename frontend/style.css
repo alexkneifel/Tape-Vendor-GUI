@@ -118,22 +118,11 @@ button:active::after {
 
 /* Side color accents for main menu buttons */
 #directory { border-left: 12px solid #ff4400; }
-#auto      { border-left: 12px solid #00bbff; }
-#stats     { border-left: 12px solid #00ff66; }
+#stats     { border-left: 12px solid #00bbff; }
+#auto      { border-left: 12px solid #00ff66; }
 #dev       { border-left: 12px solid #ffea00; }
 
-/* LED overrides for tape/grid buttons */
-#tapeContainer button::after,
-.grid-btn::after {
-    right: 8px;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    border: 1px solid #000;
-    background-color: var(--led-color, #111);
-    box-shadow: var(--led-shadow, none);
-    transition: all 0.3s ease;
-}
+
 
 /* Update this section in your CSS */
 #tapeContainer button,
@@ -151,6 +140,34 @@ button:active::after {
     overflow: hidden;                   /* Keeps everything inside the box */
 }
 
+/* 1. Fix the LED position on Grid Buttons */
+#tapeContainer button::after,
+.grid-btn::after {
+    position: absolute;
+    top: 5px;        /* Move it to the top corner */
+    right: 5px;      /* Keep it in the right corner */
+    
+    width: 8px;      /* Make it slightly smaller for grid view */
+    height: 8px;
+    
+    content: "";
+    border-radius: 50%;
+    border: 1px solid #000;
+    background-color: var(--led-color, #111);
+    box-shadow: var(--led-shadow, none);
+}
+
+/* 2. Prevent the text from touching the LED */
+.grid-btn {
+    position: relative;
+    padding: 12px 5px 5px 5px !important; /* Extra padding at the top for the LED */
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    line-height: 1.1;
+    font-size: 0.7rem; /* Keep font small so it fits */
+}
 
 .grid-btn::after {
     width: 10px;
@@ -352,6 +369,40 @@ button:active::after {
     text-transform: uppercase;
 }
 
+/* =========================
+   STAT PANEL STYLES
+========================= */
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    width: 90%;
+    max-width: 800px;
+}
+
+.stat-card {
+    background: #111;
+    border: 2px solid #444;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-left: 8px solid #00bbff; /* Green accent matching main menu */
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: #888;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+
+.stat-value {
+    font-size: 1.8rem;
+    color: #00bbff;
+    text-align: center;
+    word-break: break-word;
+}
 
 /* =========================
    5. DEV PANEL
@@ -615,6 +666,133 @@ button:active::after {
     100% { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
+/* Fix for the Emergency Stop button in the Auto-Organize menu specifically */
+/* Specifically target the Emergency Stop button in the Auto-Organize menu */
+#auto-progress .exit-btn {
+    /* Dimensions */
+    width: 300px !important;    /* Widened to fit "EMERGENCY STOP" */
+    height: 65px !important;    /* Shorter than standard buttons */
+    
+    /* Text Controls */
+    font-size: 1rem !important;  /* Force a smaller, readable size */
+    letter-spacing: 1px !important;
+    white-space: nowrap !important; /* Prevent text from stacking */
+    text-transform: uppercase;
+    
+    /* Centering */
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 0 !important;      /* Kill the 60px right-padding inherited from base */
+    
+    /* Visuals */
+    margin: 10px auto 0 auto !important;
+    background-color: #1a1a1a !important;
+    color: #ff4400 !important;
+    border: 3px solid #ff4400 !important;
+    border-left: 12px solid #ff4400 !important; /* Stronger red accent */
+    
+    animation: emergency-pulse 1.5s infinite alternate;
+}
+
+/* Redefine pulse to be more subtle with the smaller font */
+@keyframes emergency-pulse {
+    from { box-shadow: 0 0 5px #ff0000; border-color: #880000; }
+    to { box-shadow: 0 0 20px #ff0000; border-color: #ff4400; }
+}
+
+/* Permanent Static Grain */
+.static-overlay-permanent {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 10000; /* Higher than everything else */
+    opacity: 0.04;  /* Keep it VERY subtle for daily use */
+    pointer-events: none;
+    background-image: repeating-radial-gradient(#fff 0 0.0001%, #000 0 0.0002%);
+    background-size: 100px 100px;
+    animation: static-flicker 0.15s infinite;
+}
+
+/* Permanent Scanlines */
+.scanlines-permanent {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 10001;
+    pointer-events: none;
+    background: linear-gradient(
+        rgba(18, 16, 16, 0) 50%, 
+        rgba(0, 0, 0, 0.2) 50% /* Very light to avoid eye strain */
+    );
+    background-size: 100% 3px;
+}
+
+/* Permanent Vignette (The "Tube" look) */
+.vignette-permanent {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 10002;
+    pointer-events: none;
+    background: radial-gradient(circle, rgba(0,0,0,0) 70%, rgba(0,0,0,0.4) 100%);
+}
+
+/* Ensure the Boot Screen is still on top of these during startup */
+#boot-screen {
+    z-index: 11000; 
+}
+/* boot screen animation*/
+#boot-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #050505;
+    z-index: 9999;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.6s ease-out;
+}
+
+/* 2. The Glowing/Blurred Line */
+#crt-line {
+    z-index: 1;
+    width: 100%;
+    height: 4px; /* Slightly thicker for the blur core */
+    background: #fff; /* White core */
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%) scaleY(0);
+    
+    /* Multiple layers of glow: Green, then a wider soft blur */
+    box-shadow: 
+        0 0 10px #00ff66, 
+        0 0 30px #00ff66, 
+        0 0 60px rgba(0, 255, 102, 0.5),
+        0 0 100px rgba(0, 255, 102, 0.2);
+    
+    animation: crt-on 2.5s ease-out forwards;
+}
 
 
+/* Enhanced CRT Animation */
+@keyframes crt-on {
+    0% { transform: translateY(-50%) scaleX(0) scaleY(0.01); opacity: 0; }
+    5% { transform: translateY(-50%) scaleX(1) scaleY(0.01); opacity: 1; } /* Snap is fast (5%) */
+    15% { opacity: 0.7; } 
+    30% { transform: translateY(-50%) scaleX(1) scaleY(1); opacity: 1; } /* Slowly starts growing */
+    100% { transform: translateY(-50%) scaleX(1.2) scaleY(800); opacity: 0; } /* Finishes the bloom */
+}
 
+@keyframes static-flicker {
+    0% { transform: translate(0,0); }
+    10% { transform: translate(-1%, -1%); }
+    30% { transform: translate(1%, 1%); }
+    50% { transform: translate(-0.5%, 0.5%); }
+    70% { transform: translate(1.5%, -1.5%); }
+    100% { transform: translate(0,0); }
+}

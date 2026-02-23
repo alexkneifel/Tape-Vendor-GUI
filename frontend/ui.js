@@ -4,8 +4,27 @@
 let currentTapes = [];
 let isGrid = false; // Track current view mode (List/Grid)
 let genreMode = "filter"; 
-// "filter" = directory mode
-// "slot" = slot machine mode
+
+
+/* =========================
+   0. Boot Screen Animation
+========================= */
+window.addEventListener('load', () => {
+    const bootScreen = document.getElementById('boot-screen');
+    if (bootScreen) {
+        document.body.classList.add('crt-warp');
+
+        // Changed from 1300ms to 2600ms to match the new 2.5s CSS + a tiny buffer
+        setTimeout(() => {
+            bootScreen.style.opacity = '0';
+            document.body.classList.remove('crt-warp');
+            
+            setTimeout(() => {
+                bootScreen.style.display = 'none';
+            }, 800); // Slightly longer fade for a smoother exit
+        }, 2600); 
+    }
+});
 
 /* =========================
    1. NAVIGATION
@@ -16,11 +35,44 @@ let genreMode = "filter";
  * If navigating to the directory, load the tape data.
  * @param {string} menuId - The ID of the menu to display
  */
-function navigateTo(menuId) 
-{
+/**
+ * Navigate to a specific menu and hide others.
+ */
+function navigateTo(menuId) {
+    // 1️⃣ Hide all menus
     document.querySelectorAll('.menu').forEach(m => m.style.display = 'none');
-    document.getElementById(menuId).style.display = 'flex';
-    if (menuId === 'directory-menu') loadData();
+
+    // 2️⃣ Show the target menu
+    const target = document.getElementById(menuId);
+    if (target) target.style.display = 'flex';
+
+    // 3️⃣ Reset directory filters when leaving or entering directory
+    if (menuId === 'main-menu') {
+        resetDirectoryFilters();
+
+        loadData(); // refresh the directory for next time
+    } else if (menuId === 'directory-menu') {
+        loadData(); // load the directory when entering
+    }
+
+    // 4️⃣ Update stats when entering stats menu
+    if (menuId === 'stats-menu') {
+        updateStats();
+    }
+
+    // 5️⃣ Auto-organize menu setup
+    if (menuId === 'auto-menu') {
+        document.getElementById('auto-prompt').style.display = 'block';
+        document.getElementById('auto-progress').style.display = 'none';
+    }
+}
+
+function resetDirectoryFilters() {
+    const searchBar = document.getElementById('searchBar');
+    const sortSelect = document.getElementById('sortSelect');
+
+    if (searchBar) searchBar.value = '';
+    if (sortSelect) sortSelect.value = 'name-asc';
 }
 
 /* =========================
@@ -36,7 +88,7 @@ function sendMovement(action)
 {
     const x = document.getElementById('x-index').value;
     const y = document.getElementById('y-index').value;
-    fetch(`/api/move?action=${action}&x=${x}&y=${y}`)
+    fetch(`/api/srl_cmd?action=${action}&x=${x}&y=${y}`)
         .then(res => res.json())
         .then(data => alert(data.status))
         .catch(err => alert("Comm Error"));
@@ -48,7 +100,7 @@ function sendMovement(action)
 function sendOffset() 
 {
     const val = document.getElementById('x-offset').value;
-    fetch(`/api/offset?val=${val}`)
+    fetch(`/api/srl_cmd?val=${val}`)
         .then(res => res.json())
         .then(data => alert(data.status));
 }
@@ -90,6 +142,7 @@ function renderCurrentView()
  */
 async function openGenreModal(mode = "filter") {
     genreMode = mode; // Set global variable to track behavior
+    resetDirectoryFilters();
 
     if (genreMode === "filter") {
         renderCurrentView(); 
@@ -132,7 +185,9 @@ function applyGenreFilter() {
 
     // Filter currentTapes to only those that include at least one selected genre
     const filtered = currentTapes.filter(t =>
-        t.tags && t.tags.some(tag => checkedGenres.includes(tag))
+    t.in_machine == 1 &&                                   // 👈 must NOT be out
+    t.tags &&
+    t.tags.some(tag => checkedGenres.includes(tag))
     );
 
     closeGenreModal();
@@ -151,10 +206,16 @@ function applyGenreFilter() {
     }
 }
 
-
-
 function closeGenreModal() {
     document.getElementById("genreModal").style.display = "none";
+}
+
+function resetDirectoryFilters() {
+    const searchBar = document.getElementById('searchBar');
+    const sortSelect = document.getElementById('sortSelect');
+
+    if (searchBar) searchBar.value = '';
+    if (sortSelect) sortSelect.value = 'name-asc';
 }
 
 
@@ -271,7 +332,7 @@ function renderGrid(tapes = currentTapes)
 function toggleView() {
     isGrid = !isGrid;
     const gridBtn = document.querySelector('.dir-controls button:nth-child(3)');
-    gridBtn.textContent = isGrid ? 'LIST' : 'GRID';
+    gridBtn.textContent = isGrid ? 'LIST VIEW' : 'GRID VIEW';
 
     // Clear search when switching views
     document.getElementById('searchBar').value = '';
@@ -479,6 +540,8 @@ function filterRemoveList()
 function openAddModal() 
 {
     document.getElementById("addModal").style.display = "flex";
+    resetDirectoryFilters();
+    renderCurrentView();
 }
 
 /**
@@ -652,6 +715,8 @@ async function clearAllCassettes() {
  */
 function openSlotModal() {
     document.getElementById("slotModal").style.display = "flex";
+    resetDirectoryFilters();
+    renderCurrentView();
 }
 
 /**
@@ -687,27 +752,36 @@ function weightedRandom(tapes, weightFn) {
 function startRandom(type) {
     closeSlotModal();
 
-    if (!currentTapes.length) return;
+    // Only use tapes that are NOT out
+    const availableTapes = currentTapes.filter(t => t.in_machine ==1 );
+
+    console.log("Available tapes:", availableTapes);
+
+    if (!availableTapes.length) {
+        alert("No available cassettes to dispense.");
+        return;
+    }
 
     let chosen;
 
     switch(type) {
 
         case 'normal':
-            chosen = currentTapes[Math.floor(Math.random() * currentTapes.length)];
+            chosen = availableTapes[Math.floor(Math.random() * availableTapes.length)];
             break;
 
         case 'favorite':
-            chosen = weightedRandom(currentTapes, t => (t.listens || 0) + 1);
+            chosen = weightedRandom(availableTapes, t => (t.listens || 0) + 1);
             break;
 
         case 'neglected':
-            chosen = weightedRandom(currentTapes, t => 1 / ((t.listens || 0) + 1));
+            chosen = weightedRandom(availableTapes, t => 1 / ((t.listens || 0) + 1));
             break;
     }
 
     runSlotAnimation(chosen);
 }
+
 
 
 function openGenreFromSlot() {
@@ -736,5 +810,132 @@ function runSlotAnimation(finalTape) {
         openModal(finalTape);
     }, 2500);
 }
+
+
+/**
+ * Calculate and display statistics from currentTapes
+ */
+function updateStats() {
+    if (currentTapes.length === 0) return;
+
+    // 1. Total Cassettes
+    const totalTapes = currentTapes.length;
+
+    // 2. Total Plays
+    const totalPlays = currentTapes.reduce((acc, t) => acc + (t.listens || 0), 0);
+
+    // 3. Most Played Cassette
+    const mostPlayedTape = [...currentTapes].sort((a, b) => (b.listens || 0) - (a.listens || 0))[0];
+
+    // 4. Favorite Genre (Most frequent tag)
+    const genreCounts = {};
+    currentTapes.forEach(t => {
+        if (t.tags) {
+            t.tags.forEach(tag => {
+                genreCounts[tag] = (genreCounts[tag] || 0) + 1;
+            });
+        }
+    });
+
+    let favoriteGenre = "NONE";
+    let maxCount = 0;
+    for (const [genre, count] of Object.entries(genreCounts)) {
+        if (count > maxCount) {
+            maxCount = count;
+            favoriteGenre = genre;
+        }
+    }
+
+    // Inject into HTML
+    document.getElementById('stat-total-tapes').innerText = totalTapes;
+    document.getElementById('stat-total-plays').innerText = totalPlays;
+    document.getElementById('stat-most-played').innerText = mostPlayedTape ? mostPlayedTape.name.toUpperCase() : "N/A";
+    document.getElementById('stat-fav-genre').innerText = favoriteGenre.toUpperCase();
+}
+
+/* =========================
+   AUTO-ORGANIZE LOGIC
+   TODO: I should write this and check it
+========================= */
+
+/**
+ * Triggers the reorganization sequence
+ */
+async function beginAutoOrganize() {
+    // UI Transition
+    document.getElementById('auto-prompt').style.display = 'none';
+    document.getElementById('auto-progress').style.display = 'block';
+    
+    // 1. Logic: Sort tapes by listens (descending)
+    const sorted = [...currentTapes].sort((a, b) => (b.listens || 0) - (a.listens || 0));
+    
+    const moves = [];
+    let targetX = 1;
+    let targetY = 1;
+
+    sorted.forEach(tape => {
+        // Only queue a move if it's not already in the right spot
+        if (parseInt(tape.slot_x) !== targetX || parseInt(tape.slot_y) !== targetY) {
+            moves.push({
+                id: tape.id,
+                name: tape.name,
+                from: { x: tape.slot_x, y: tape.slot_y },
+                to: { x: targetX, y: targetY }
+            });
+        }
+        
+        // Increment coordinates (5 wide, 11 high)
+        targetX++;
+        if (targetX > 5) {
+            targetX = 1;
+            targetY++;
+        }
+    });
+
+    document.getElementById('auto-status').innerText = "EXECUTING SEQUENTIAL MOVES";
+    document.getElementById('auto-step').innerText = `PENDING OPERATIONS: ${moves.length}`;
+
+    // 2. Communication with Flask
+    try {
+        const response = await fetch('/api/auto_organize', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ moves: moves })
+        });
+
+        if (response.ok) {
+            alert("RECALIBRATION SUCCESSFUL. DATABASE UPDATED.");
+            navigateTo('main-menu');
+        } else {
+            const err = await response.json();
+            alert("HARDWARE ERROR: " + (err.status || "Unknown Failure"));
+            navigateTo('main-menu');
+        }
+    } catch (err) {
+        alert("COMMUNICATION LOSS: SERIAL PORT UNRESPONSIVE");
+        navigateTo('main-menu');
+    }
+}
+
+/**
+ * Emergency Halt of organize.
+ */
+function cancelAutoOrganize() {
+    console.log("!!! EMERGENCY STOP INITIATED !!!");
+    
+    // 1. Tell the hardware to stop
+    fetch(`/api/srl_cmd?action=cancel`)
+        .then(() => {
+            alert("PROTOCOL TERMINATED. MECHANICAL HALT ENGAGED.");
+            // 2. Return to main menu
+            navigateTo('main-menu');
+        })
+        .catch(err => {
+            console.error("Failed to send stop signal", err);
+            navigateTo('main-menu');
+        });
+}
+
+
 
 

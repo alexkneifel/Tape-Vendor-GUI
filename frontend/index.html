@@ -8,12 +8,21 @@
 </head>
 <body>
 
+    <div class="static-overlay-permanent"></div>
+    <div class="scanlines-permanent"></div>
+    <div class="vignette-permanent"></div>
+
+    <div id="boot-screen">
+        <div id="crt-line"></div>
+        <div class="static-overlay"></div>
+    </div>
+
     <!-- Main menu that we load into -->
     <div id="main-menu" class="menu">
         <div class="center">
             <button id="directory" onclick="navigateTo('directory-menu')">Directory</button>
-            <button id="auto" onclick="navigateTo('auto-menu')">Auto-Organize</button>
             <button id="stats" onclick="navigateTo('stats-menu')">Listening Log</button>
+            <button id="auto" onclick="navigateTo('auto-menu')">Auto-Organize</button>
             <button id="dev" onclick="navigateTo('dev-menu')">Dev Mode</button>
         </div>
     </div>
@@ -34,14 +43,24 @@
                 </select>
             </div>
         
-            <button onclick="toggleView()">GRID</button>
+            <button onclick="toggleView()">GRID VIEW</button>
             <button onclick="openAddModal()">+</button>
             <button onclick="openSlotModal()">RCG</button>
-            <button onclick="openGenreModal()">GENRE</button>
+            <button onclick="openGenreModal()">BY GENRE</button>
         </div>
         
         <!-- scrollable list of cassettes -->
         <div id="tapeContainer"></div>
+    </div>
+
+        <!-- Modal that pops up when selecting a cassette-->
+    <div id="modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <h1 id="m-title" style="color: #ff9d00; margin-bottom: 10px;"></h1>
+            <p id="m-artist" style="font-size: 1.4rem; margin-bottom: 20px;"></p>
+            <div id="m-tags" style="color:#00ff66; margin-top:10px;"></div>
+            <div id="m-actions" style="margin: 25px 0;"></div>
+        </div>
     </div>
 
     <!-- Menu for the development -->
@@ -76,16 +95,6 @@
         </div>
     </div>
 
-    <!-- Modal that pops up when selecting a cassette-->
-    <div id="modal" class="modal" style="display:none;">
-        <div class="modal-content">
-            <h1 id="m-title" style="color: #ff9d00; margin-bottom: 10px;"></h1>
-            <p id="m-artist" style="font-size: 1.4rem; margin-bottom: 20px;"></p>
-            <div id="m-tags" style="color:#00ff66; margin-top:10px;"></div>
-            <div id="m-actions" style="margin: 25px 0;"></div>
-        </div>
-    </div>
-
     <!-- Modal that pops up when adding a new cassette-->
     <div id="addModal" class="modal" style="display:none;">
         <div class="modal-content">
@@ -101,6 +110,7 @@
         </div>
     </div>
 
+    <!-- Modal for genre filtering -->
     <div id="genreModal" class="modal" style="display:none;">
         <div class="modal-content">
             <h1 style="color:#00ff66;">FILTER BY GENRE</h1>
@@ -114,6 +124,70 @@
         </div>
     </div>
     
+    <!-- Menu for the stats menu -->
+<div id="stats-menu" class="menu" style="display: none;">
+    <div class="center stat-panel">
+        <h2 style="color: #ffea00; margin-bottom: 20px;">> LISTENING_LOG</h2>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-label">TOTAL ARCHIVE</span>
+                <span id="stat-total-tapes" class="stat-value">0</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">TOTAL PLAYS</span>
+                <span id="stat-total-plays" class="stat-value">0</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">MOST PLAYED</span>
+                <span id="stat-most-played" class="stat-value">---</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">FAVORITE GENRE</span>
+                <span id="stat-fav-genre" class="stat-value">---</span>
+            </div>
+        </div>
+
+        <button onclick="navigateTo('main-menu')" class="exit-btn" style="width: 50%; margin-top: 30px;">EXIT</button>
+    </div>
+</div>
+
+  <!-- Menu for the auto organize menu -->
+
+<div id="auto-menu" class="menu overlay" style="display: none;">
+    <div id="auto-prompt" class="modal-content" style="border-color: #00ff66;">
+        <h2 style="color: #00ff66;">> SYSTEM_RECALIBRATION</h2>
+        <p style="color: #00ff66; line-height: 1.5; text-align: left; font-size: 1.1rem;">
+            WARNING: PROTOCOL "OPTIMIZED_ACCESS" WILL REPOSITION ARCHIVE DATA BASED ON FREQUENCY OF ACCESS.
+            <br><br>
+            - PRIORITY NODES WILL BE MOVED TO ENTRANCE (Y=1).
+            <br>
+            - MECHANICAL LATENCY: SIGNIFICANT.
+            <br><br>
+            PROCEED WITH SEQUENTIAL RESTRUCTURING?
+        </p>
+        <div class="modal-btn-container">
+            <button onclick="beginAutoOrganize()" >PROCEED</button>
+            <button onclick="navigateTo('main-menu')">ABORT</button>
+        </div>
+    </div>
+
+    <div id="auto-progress" style="display: none; text-align: center;">
+        <div class="cassette" style="border-color: #ff9d00; margin: 0 auto;">
+            <div class="reel left-reel" style="border-color: #ff9d00;"></div>
+            <div class="reel right-reel" style="border-color: #ff9d00;"></div>
+            <div class="tape-body" style="background: #595754;"></div>
+        </div>
+        
+        <h2 id="auto-status" style="color: #ff9d00; margin-top: 30px;">RECALIBRATING...</h2>
+        <p id="auto-step" style="color: #555; font-family: 'Share Tech Mono';">CALCULATING VECTORS</p>
+        
+        <button onclick="cancelAutoOrganize()" class="exit-btn" style="width: 250px; margin: 40px auto 0 auto; border-left: 12px solid #ff0000;">
+            EMERGENCY STOP
+        </button>
+    </div>
+</div>
+
     <div id="removeModal" class="modal" style="display:none;">
         <div class="modal-content">
             <h1 style="color:#ff4400;">REMOVE CASSETTE</h1>

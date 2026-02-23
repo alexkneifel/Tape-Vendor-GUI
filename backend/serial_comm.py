@@ -1,14 +1,21 @@
 import serial
 import time
 import struct
+import serial.tools.list_ports
 
-# Port for Raspberry Pi to Arduino
-try:
-    ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
-    time.sleep(2) # Wait for Arduino reset
-except:
-    print("UART Error: Could not connect to Arduino")
-    ser = None
+arduino_port = None
+
+for port in serial.tools.list_ports.comports():
+    print(port.device, port.description)
+    if "usbmodem" in port.device:
+        arduino_port = port.device
+        break
+
+if arduino_port:
+    ser = serial.Serial(arduino_port, 9600, timeout=1)
+    print("Connected to", arduino_port)
+else:
+    print("Arduino not found")
 
 '''
 send byte over serial port
@@ -31,3 +38,29 @@ def send_float(float_value):
         print(f"UART SENT FLOAT: {float_value}")
     else:
         print(f"MOCK UART SENT FLOAT: {float_value}")
+
+'''
+receive byte over serial
+'''
+def receive_byte():
+    if ser and ser.is_open:
+        if ser.in_waiting > 0:  # Check if data is sitting in the buffer
+            incoming = ser.read(1)
+            byte_value = ord(incoming)
+            print(f"UART RECEIVED BYTE: {hex(byte_value)}")
+            return byte_value
+    return None
+
+'''
+wait for next process based on the arduino message.
+'''
+def wait_for_arduino(expected_byte=0x4B): # 0x4B is ASCII 'K' for OK
+    print("Waiting for Arduino confirmation...")
+    timeout = time.time() + 30  # 30 second timeout
+    
+    while time.time() < timeout:
+        received = receive_byte()
+        if received == expected_byte:
+            return True
+        time.sleep(0.1) # Don't hog the CPU
+    return False
