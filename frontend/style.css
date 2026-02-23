@@ -575,9 +575,15 @@ button:active::after {
 .modal-content {
     background: #222;
     border: 4px solid #ff9d00;
-    padding: 30px;
-    width: 85%;
+
+    width: 90%;
     max-width: 550px;
+
+    padding: 20px;              /* slightly smaller */
+    box-sizing: border-box;
+
+    max-height: 90vh;           /* 🔥 critical */
+
     text-align: center;
 }
 
