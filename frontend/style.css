@@ -625,7 +625,7 @@ button:active::after {
 
 .primary-btn {
     flex: 2;
-    height: 80px;
+    height: 40px;
     font-size: 1.6rem;
     background: #ff9d00;
     border-left: 12px solid #ff4400;
