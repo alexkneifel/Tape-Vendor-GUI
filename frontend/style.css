@@ -246,21 +246,20 @@ button:active::after {
     to { opacity: 0.7; }
 }
 
-#slotModal .modal-btn-container {
-    margin-top: 15px;
-    /* REMOVE height: 20%; */
-    height: auto;           /* Let the content define the height */
-    min-height: 0;          /* Prevents weird flex behavior */
-    
-    display: flex;
-    flex-direction: column; /* Stack buttons for better touch targets on RPi */
-    gap: 12px !important;   /* Comfortable spacing for fingers */
-    width: 100%;
-    
-    /* Ensure it doesn't push out of the modal padding */
-    box-sizing: border-box; 
+#slotModal .modal-btn-container button {
+    height: auto !important;      /* let height be determined by padding & font */
+    min-height: 40px;             /* still big enough to tap */
+    max-height: 60px;             /* prevents buttons from being too tall */
+    padding: 6px 10px !important; /* smaller padding so buttons shrink */
+    font-size: clamp(0.9rem, 2.5vw, 1.2rem); /* scales font for small screens */
 }
 
+#slotModal .modal-btn-container {
+    flex-direction: column;
+    gap: 10px;      /* slightly smaller gap helps fit */
+    width: 100%;
+    box-sizing: border-box;
+}
 
 /* =========================
    4. DIRECTORY / TAPE LIST
