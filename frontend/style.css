@@ -518,11 +518,11 @@ button:active::after {
     font-size: clamp(0.7rem, 2vw, 1.2rem);
 }
 
-/* Targets number input spinners */
-.dev-panel input[type="number"]::-webkit-inner-spin-button {
-    width: 32px;   /* make the arrows bigger */
-    height: 32px;  /* taller for finger taps */
-    margin: 0 2px; /* optional spacing */
+.dev-panel input {
+    width: 100%;
+    height: 100%;
+    font-size: clamp(0.8rem, 2vw, 1.5rem);
+    padding: 0 4px;
 }
 
 .dev-grid input {
@@ -550,6 +550,35 @@ button:active::after {
     margin-top: auto; /* Pushes it to bottom but stays within container */
 }
 
+.input-pair input[type="number"] {
+    width: 100px;          /* wider so numbers aren’t cramped */
+    height: 100px;         /* taller for finger taps */
+    font-size: 3rem;    /* bigger text */
+    padding: 0 12px;      /* horizontal padding for comfort */
+    box-sizing: border-box;
+    
+    /* Optional visuals to match your theme */
+    background-color: #111;
+    border: 2px solid #444;
+    color: #00ff66;
+    border-radius: 6px;
+    text-align: center;   /* center the numbers */
+}
+
+#x-offset {
+    width: 100px;          /* wider so you can see the number clearly */
+    height: 100px;         /* taller for finger taps */
+    font-size: 2rem;    /* bigger text for readability */
+    padding: 0 12px;      /* horizontal padding */
+    box-sizing: border-box;
+
+    /* Optional visuals to match dev panel */
+    background-color: #111;
+    border: 2px solid #444;
+    color: #00ff66;
+    border-radius: 6px;
+    text-align: center;   /* center the number */
+}
 
 /* =========================
    6. OVERLAYS / MODALS / LOADER
