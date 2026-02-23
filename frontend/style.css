@@ -246,59 +246,42 @@ button:active::after {
     to { opacity: 0.7; }
 }
 
+#slotModal .modal-content {
+    width: 95%;
+    max-width: 420px;   /* smaller cap for small screens */
+    padding: 16px;
+    overflow: hidden;   /* prevent any bleed */
+}
+
+/* Force vertical stacking properly */
 #slotModal .modal-btn-container {
-    margin-top: 10px;
-    gap: 10px !important;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
     width: 100%;
 }
-/* =========================
-   RANDOM CASSETTE GENERATOR FIX
-========================= */
 
-#slotModal .primary-btn,
-#slotModal .secondary-btn {
-    all: unset;                    /* 🔥 Fully reset global button styles */
+/* Fully isolate buttons */
+#slotModal .modal-btn-container button {
+    all: unset;
     box-sizing: border-box;
 
     width: 100%;
-    min-height: 55px;
-    height: auto;
+    max-width: 100%;
 
-    padding: 12px 16px;
-    margin: 6px 0;
+    padding: 12px 10px;
+    min-height: 50px;
 
     display: flex;
     align-items: center;
     justify-content: center;
-    text-align: center;
 
     font-family: 'Share Tech Mono';
-    font-size: clamp(0.9rem, 3.5vw, 1.2rem);
-    letter-spacing: 1px;
-    text-transform: uppercase;
+    font-size: clamp(0.85rem, 3vw, 1.1rem);
+    text-align: center;
 
     border-radius: 6px;
     cursor: pointer;
-}
-
-/* PURE RANDOM / MAIN OPTIONS */
-#slotModal .primary-btn {
-    background: #ff9d00;
-    color: #111;
-    border: 3px solid #ff9d00;
-    border-left: 10px solid #ff4400;
-}
-
-/* CANCEL BUTTON */
-#slotModal .secondary-btn {
-    background: #333;
-    color: #aaa;
-    border: 2px solid #444;
-}
-
-/* Remove LED pseudo element entirely */
-#slotModal button::after {
-    display: none !important;
 }
 
 
