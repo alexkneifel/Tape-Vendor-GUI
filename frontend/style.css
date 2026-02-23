@@ -247,10 +247,18 @@ button:active::after {
 }
 
 #slotModal .modal-btn-container {
-    margin-top: 10px;
-    height: 20%;
-    gap: 10px !important;
+    margin-top: 15px;
+    /* REMOVE height: 20%; */
+    height: auto;           /* Let the content define the height */
+    min-height: 0;          /* Prevents weird flex behavior */
+    
+    display: flex;
+    flex-direction: column; /* Stack buttons for better touch targets on RPi */
+    gap: 12px !important;   /* Comfortable spacing for fingers */
     width: 100%;
+    
+    /* Ensure it doesn't push out of the modal padding */
+    box-sizing: border-box; 
 }
 
 
