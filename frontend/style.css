@@ -247,11 +247,8 @@ button:active::after {
 }
 
 #slotModal .modal-btn-container {
-    display: flex;
-    flex-direction: column;      /* stack buttons vertically */
-    align-items: center;         /* horizontal center */
-    justify-content: center;     /* vertical center in container */
-    gap: 15px;                   /* spacing between buttons */
+    margin-top: 10px;
+    gap: 10px !important;
     width: 100%;
 }
 
@@ -611,9 +608,8 @@ button:active::after {
 .modal-btn-container {
     display: flex;
     justify-content: center;
-    flex-direction: column;  /* stack vertically */
-    width: 100%;
-    gap: 10px;
+    gap: 20px;
+    margin-top: 15px;
 }
 
 .modal-btn-container button {
