@@ -32,9 +32,11 @@ html, body {
 }
 
 #directory-menu {
-    justify-content: flex-start;
+    justify-content: flex-start; /* Items start from the top */
     align-items: center;
-    padding-top: 20px;
+    padding-top: 10px;
+    height: 100vh;
+    overflow: hidden; /* Prevent the whole page from scrolling */
 }
 
 .center {
@@ -218,25 +220,59 @@ button:active::after {
    4. DIRECTORY / TAPE LIST
 ========================= */
 .dir-controls {
-    display: flex; /* Swapped Grid for Flex-Wrap for screen invariance */
-    flex-wrap: wrap;
+    display: flex;
+    flex-wrap: wrap; 
     justify-content: center;
-    gap: 10px;
-    width: 100%;
+    align-items: center; /* Keeps everything aligned horizontally */
+    gap: 8px;
+    width: 98%;
     margin-bottom: 15px;
-    height: auto; /* Let it grow if it needs to wrap */
+    height: auto; /* Allow it to wrap if screen is very narrow */
+    flex-shrink: 0; /* Prevents the header from squishing */
 }
 
+/* =========================
+   4. DIRECTORY / TAPE LIST (FIXED)
+========================= */
+.dir-controls {
+    display: flex;
+    flex-wrap: wrap; 
+    justify-content: center;
+    align-items: center; /* Keeps everything aligned horizontally */
+    gap: 8px;
+    width: 98%;
+    margin-bottom: 15px;
+    height: auto; /* Allow it to wrap if screen is very narrow */
+    flex-shrink: 0; /* Prevents the header from squishing */
+}
+
+/* Specific reset for toolbar buttons to stop them from being 10vh tall */
 .dir-controls button {
-    flex: 1 1 auto; /* Allow buttons to grow/shrink */
-    min-width: 80px;
-    height: 50px;
-    font-size: 0.9rem;
-    padding: 0 10px;
+    all: unset; /* Clear the giant menu button styles */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    /* Sizing */
+    flex: 1 1 auto; 
+    min-width: 60px;
+    height: 45px !important; /* Force a compact height */
+    padding: 0 10px !important;
+    
+    /* Visuals */
+    background: #333;
+    color: #ff9d00;
+    border: 2px solid #444;
+    border-radius: 4px;
+    font-family: 'Share Tech Mono';
+    font-size: 0.8rem !important;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-sizing: border-box;
 }
 
 .dir-controls button::after { display: none; }
-.dir-controls button:nth-child(4) { font-size: 2rem; }
+.dir-controls button:nth-child(4) { font-size: 1.5rem !important;font-weight: bold;}
 .dir-controls button:nth-child(5) { white-space: nowrap; }
 
 .dir-controls input {
@@ -248,42 +284,32 @@ button:active::after {
     font-size: 1.2rem;
 }
 
+/* Adjust the search container to stay in line */
 .search-filter-container {
-    flex: 1 1 100%; /* Force search to take full row on very small screens if needed */
+    flex: 2 1 300px; /* Grows more than buttons, but won't exceed screen */
     display: flex;
-    gap: 8px;
+    gap: 5px;
+    height: 45px;
 }
 
-.search-filter-container input {
-    flex: 1;
-    font-size: 1.2rem;
-    padding: 8px 12px;
-    height: 40px;
-    padding: 0 12px;
-    border: 2px solid #444;
-    background: #000;
-    color: #00ff66;
-}
-
+.search-filter-container input, 
 .search-filter-container select {
-    width: 150px;
-    font-family: 'Share Tech Mono';
-    font-size: 1rem;
-    padding: 4px 8px;
-    border: 2px solid #444;
+    height: 100%;
     background: #000;
+    border: 2px solid #444;
     color: #00ff66;
-    cursor: pointer;
+    font-family: 'Share Tech Mono';
+    box-sizing: border-box;
 }
 
 
 #tapeContainer {
     width: 95%;
-    flex: 1;
-    overflow-y: auto;
+    flex: 1; /* Takes up all remaining vertical space */
+    overflow-y: auto; /* Only this part scrolls */
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
     padding-bottom: 20px;
 }
 
