@@ -557,6 +557,11 @@ button:active::after {
     padding: 0 12px;      /* horizontal padding for comfort */
     box-sizing: border-box;
     
+    display: flex;
+    flex-direction: column;   /* stack label on top of input */
+    align-items: center;      /* center horizontally */
+    gap: 8px;    
+    
     /* Optional visuals to match your theme */
     background-color: #111;
     border: 2px solid #444;
