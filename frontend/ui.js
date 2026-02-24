@@ -88,22 +88,13 @@ function sendMovement(action)
 {
     const x = document.getElementById('x-index').value;
     const y = document.getElementById('y-index').value;
-    fetch(`/api/srl_cmd?action=${action}&x=${x}&y=${y}`)
+    const x_offset = document.getElementById('x-offset').value;
+    fetch(`/api/srl_cmd?action=${action}&x=${x}&y=${y}&x_offset=${x_offset}`)
         .then(res => res.json())
         .then(data => alert(data.status))
         .catch(err => alert("Comm Error"));
 }
 
-/**
- * Send an X-axis offset to the hardware
- */
-function sendOffset() 
-{
-    const val = document.getElementById('x-offset').value;
-    fetch(`/api/srl_cmd?val=${val}`)
-        .then(res => res.json())
-        .then(data => alert(data.status));
-}
 
 /* =========================
    3. DIRECTORY DATA & VIEW

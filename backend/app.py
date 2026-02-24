@@ -32,6 +32,7 @@ def send_cmd():
     action = request.args.get('action')
     x = request.args.get('x', '1')
     y = request.args.get('y', '1')
+    x_offset = request.args.get('x_offset', '1')
     
     if action in COMMANDS:
         serial_comm.send_byte(COMMANDS[action])
@@ -43,7 +44,7 @@ def send_cmd():
                 return jsonify(status="Invalid slot coordinates"), 400
         elif action == "offset":
             try:
-                offset_val = float(request.args.get('val', '0.0'))*10
+                offset_val = float(x_offset)*10
                 if 0 < offset_val < 50: 
                     serial_comm.send_byte(int(offset_val))
                 else:
