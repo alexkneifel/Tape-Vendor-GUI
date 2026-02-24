@@ -40,7 +40,8 @@ def receive_byte():
     if ser and ser.is_open:
         if ser.in_waiting > 0:  # Check if data is sitting in the buffer
             incoming = ser.read(1)
-            byte_value = ord(incoming)
+            if incoming:
+                byte_value = incoming[0]
             print(f"UART RECEIVED BYTE: {hex(byte_value)}")
             return byte_value
     return None
