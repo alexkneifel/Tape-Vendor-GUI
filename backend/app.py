@@ -15,7 +15,7 @@ app = Flask(__name__, template_folder="../frontend", static_folder="../frontend"
 COMMANDS = {
     "home": 0x01, "pickup": 0x02, "dropoff": 0x03, "goto": 0x04,
     "servo": 0x05, "offset": 0x06, "cancel": 0x07, "remove" : 0x08, 
-    "entrance": 0x09, "dispense": 0x0A, "return": 0x0B
+    "entrance": 0x09, "dispense": 0x0A, "return": 0x0B, "switch": 0x0C
 }
 
 '''
@@ -122,6 +122,8 @@ Returns JSON of all cassettes in database.
 def get_tapes():
     return jsonify(db.get_all_cassettes())
 
+dispense_status = {}  # { tape_id: "in_progress" | "done" | "timeout" }
+
 '''
 Sends move commands to hardware.
 '''
@@ -132,20 +134,19 @@ def dispense():
     if not tape:
         return jsonify(status="Tape not found"), 404
 
-    # 1️⃣ Mark in DB immediately
-    db.mark_dispensed(tape_id)
+    dispense_status[tape_id] = "in_progress"
 
+    # Send command immediately
     serial_comm.send_byte(COMMANDS["dispense"])
     serial_comm.send_byte(tape['slot_x'])
     serial_comm.send_byte(tape['slot_y'])
 
-    if not serial_comm.wait_for_arduino():
-        return jsonify(status="Hardware timeout"), 500
+    # Start background listener
+    threading.Thread(target=handle_dispense, args=(tape_id,), daemon=True).start()
 
-    # ✅ All done
-    return jsonify(status="done")
+    return jsonify(status="started")
 
-return_status = {}  # { tape_id: "waiting" | "in_progress" | "done" }
+return_status = {}
 
 '''
 When a tape is returned, it changes it to present in database.
@@ -157,34 +158,32 @@ def return_tape():
     tape = db.get_tape_by_id(tape_id)
     if not tape:
         return jsonify(status="Tape not found"), 404
-    
+
     return_status[tape_id] = "waiting_for_insert"
 
-    # Optional: Send hardware commands for dropoff
     serial_comm.send_byte(COMMANDS["return"])
     serial_comm.send_byte(tape['slot_x'])
     serial_comm.send_byte(tape['slot_y'])
-    #TODO UI should prompt for cassette to be inserted
-    #once it's detected in the entrance, arduino returns screen can change to returning tape
 
-    #wait once for cassette to be detected in the entrance
+    threading.Thread(target=handle_return, args=(tape_id,), daemon=True).start()
+
+    return jsonify(status="started")
+
+def handle_return(tape_id):
+    # Stage 1: wait for cassette inserted
     if not serial_comm.wait_for_arduino():
-        #this means cassette was never detected in entrance
         return_status[tape_id] = "timeout"
-        return jsonify(status="Hardware timeout"), 500
-    
+        return
+
     return_status[tape_id] = "returning"
-    #how do i change the UI from please insert tape to returning tape? 
+
+    # Stage 2: wait for shelf placement finished
     if not serial_comm.wait_for_arduino():
         return_status[tape_id] = "timeout"
-        #this means for some reason arduino never said it was done placing cassette on shelf
-        return jsonify(status="Hardware timeout"), 500
-    
-    # Update DB: tape is back in machine
+        return
+
     db.update_status(tape_id, 1)
     return_status[tape_id] = "done"
-
-    return jsonify(status="done")
 
 '''
 Endpoint for UI to poll the return status of a tape.'''
@@ -192,6 +191,19 @@ Endpoint for UI to poll the return status of a tape.'''
 def return_status_endpoint():
     tape_id = request.args.get("id")
     status = return_status.get(tape_id, "unknown")
+    return jsonify(status=status)
+
+def handle_dispense(tape_id):
+    if serial_comm.wait_for_arduino():
+        db.mark_dispensed(tape_id)
+        dispense_status[tape_id] = "done"
+    else:
+        dispense_status[tape_id] = "timeout"
+
+@app.route("/api/dispense_status")
+def dispense_status_endpoint():
+    tape_id = request.args.get("id")
+    status = dispense_status.get(tape_id, "unknown")
     return jsonify(status=status)
 
 '''
@@ -222,7 +234,74 @@ def get_tags():
     tags = db.get_all_tags()
     return jsonify(tags)
 
+auto_status = {
+    "state": "idle",   # idle | running | done | timeout | error
+    "total": 0,
+    "current": 0
+}
 
+'''
+Background thread to handle the auto-organize process.
+'''
+@app.route("/api/auto_organize", methods=["POST"])
+def auto_organize():
+    data = request.get_json()
+    moves = data.get("moves", [])
+
+    if not moves:
+        return jsonify(status="No moves provided"), 400
+
+    if auto_status["state"] == "running":
+        return jsonify(status="Already running"), 400
+
+    auto_status["state"] = "running"
+    auto_status["total"] = len(moves)
+    auto_status["current"] = 0
+
+    threading.Thread(
+        target=handle_auto_organize,
+        args=(moves,),
+        daemon=True
+    ).start()
+
+    return jsonify(status="started")
+
+def handle_auto_organize(moves):
+    global auto_status
+
+    for index, move in enumerate(moves):
+
+        auto_status["current"] = index + 1
+
+        # Send SWITCH command
+        serial_comm.send_byte(0x0C)
+
+        # Send FROM position
+        serial_comm.send_byte(int(move["from"]["x"]))
+        serial_comm.send_byte(int(move["from"]["y"]))
+
+        # Send TO position
+        serial_comm.send_byte(int(move["to"]["x"]))
+        serial_comm.send_byte(int(move["to"]["y"]))
+
+        # Wait for Arduino confirmation
+        if not serial_comm.wait_for_arduino():
+            auto_status["state"] = "timeout"
+            return
+
+        # ✅ Update DB AFTER hardware confirms
+        db.update_tape_position(
+            move["id"],
+            move["to"]["x"],
+            move["to"]["y"]
+        )
+
+    auto_status["state"] = "done"
+
+
+@app.route("/api/auto_status")
+def auto_status_endpoint():
+    return jsonify(auto_status)
 
 
 if __name__ == "__main__":

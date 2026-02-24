@@ -386,69 +386,86 @@ function closeModal()
 /* =========================
    6. CASSETTE ACTIONS
 ========================= */
-
 /**
  * Dispense or return a tape, show loader animation
  * @param {number} id - Tape ID
  * @param {string} type - 'dispense' or 'return'
- * @returns {Promise<void>} resolves when operation is done
+ * @returns {Promise<void>}
  */
 async function actionTape(id, type) {
     closeModal();
 
-    // initial loader messages
-    if (type === 'return') {
+    // ---- Initial UI state ----
+    if (type === "return") {
         showLoader("Please insert cassette...");
-    } else if (type === 'dispense') {
+    } else {
         showLoader("DISPENSING...");
     }
 
-    // start the action
-    const startResp = await fetch(`/api/${type}`, {
-        method: type === 'return' ? "POST" : "GET",
-        headers: type === 'return' ? { "Content-Type": "application/json" } : undefined,
-        body: type === 'return' ? JSON.stringify({ id }) : undefined
-    });
-
+    // ---- Start hardware action ----
+    const startResp = await fetch(`/api/${type}?id=${id}`);
     if (!startResp.ok) {
         hideLoader();
-        throw new Error("Failed to start action on machine");
+        alert("Failed to start machine");
+        return;
     }
 
-    // poll for status
-    let done = false;
-    const pollInterval = 300; // ms
-    while (!done) {
+    // ---- Poll for status ----
+    const pollInterval = 300;
+    let lastStatus = null;
+
+    while (true) {
         await new Promise(r => setTimeout(r, pollInterval));
 
         const statusResp = await fetch(`/api/${type}_status?id=${id}`);
         if (!statusResp.ok) continue;
 
-        const data = await statusResp.json();
+        const { status } = await statusResp.json();
 
-        if (type === 'return') {
-            // update loader mid-return
-            if (data.status === "returning") {
-                showLoader("Returning cassette...");
-            } else if (data.status === "done") {
-                done = true;
-            } else if (data.status === "timeout") {
-                hideLoader();
-                alert("Hardware timeout");
-                done = true;
+        // Prevent unnecessary UI re-renders
+        if (status === lastStatus) continue;
+        lastStatus = status;
+
+        // ---- RETURN STATE MACHINE ----
+        if (type === "return") {
+
+            if (status === "waiting_for_insert") {
+                showLoader("Please insert cassette...");
             }
-        } else if (type === 'dispense') {
-            if (data.status === "done") {
-                done = true;
-            } else if (data.status === "timeout") {
-                hideLoader();
+
+            else if (status === "returning") {
+                showLoader("Returning cassette...");
+            }
+
+            else if (status === "done") {
+                break;
+            }
+
+            else if (status === "timeout") {
                 alert("Hardware timeout");
-                done = true;
+                break;
+            }
+        }
+
+        // ---- DISPENSE ----
+        else if (type === "dispense") {
+
+            if (status === "in_progress") {
+                showLoader("DISPENSING...");
+            }
+
+            else if (status === "done") {
+                break;
+            }
+
+            else if (status === "timeout") {
+                alert("Hardware timeout");
+                break;
             }
         }
     }
 
-    // final cleanup
+    // ---- Final Cleanup ----
     hideLoader();
     await loadData();
 }
@@ -899,9 +916,12 @@ async function beginAutoOrganize() {
     const sorted = [...currentTapes].sort((a, b) => (b.listens || 0) - (a.listens || 0));
     
     const moves = [];
+
+    // TODO the target slot should be the next closest slot to 3,1
     let targetX = 1;
     let targetY = 1;
 
+    // this should be making a queue of all the moves we want to make, send to backend
     sorted.forEach(tape => {
         // Only queue a move if it's not already in the right spot
         if (parseInt(tape.slot_x) !== targetX || parseInt(tape.slot_y) !== targetY) {

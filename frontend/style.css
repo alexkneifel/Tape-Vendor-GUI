@@ -623,7 +623,10 @@ button:active::after {
     padding: 20px;              /* slightly smaller */
     box-sizing: border-box;
 
-    max-height: 90vh;           /* 🔥 critical */
+    display: flex;
+    flex-direction: column;
+    max-height: 85vh;      /* Prevent modal from exceeding screen */
+    overflow: hidden;      /* Prevent children from spilling out */
 
     text-align: center;
 }
@@ -725,6 +728,12 @@ button:active::after {
     flex: none !important;
     box-shadow: none !important;
     border-radius: 50%;        /* Keeps it a perfect circle */
+}
+
+#removeContainer {
+    flex: 1;              /* Take remaining vertical space */
+    overflow-y: auto;
+    min-height: 0;        /* IMPORTANT: allows flex child to shrink */
 }
 
 /* Ensure the text inside is centered and sized right */
