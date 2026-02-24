@@ -391,28 +391,66 @@ function closeModal()
  * Dispense or return a tape, show loader animation
  * @param {number} id - Tape ID
  * @param {string} type - 'dispense' or 'return'
+ * @returns {Promise<void>} resolves when operation is done
  */
-async function actionTape(id, type) 
-{
+async function actionTape(id, type) {
     closeModal();
-    const loaderMsg = type === 'dispense' ? "DISPENSING..." : "RETURNING...";
-    showLoader(loaderMsg);
-    
-    try {
-        const response = await fetch(`/api/${type}?id=${id}`);
-        if (response.ok) {
-            setTimeout(async () => { 
-                hideLoader(); 
-                await loadData(); 
-            }, 4000);
-        } else {
-            alert("Error communicating with machine.");
-            hideLoader();
-        }
-    } catch (err) {
-        console.error("Action failed:", err);
-        hideLoader();
+
+    // initial loader messages
+    if (type === 'return') {
+        showLoader("Please insert cassette...");
+    } else if (type === 'dispense') {
+        showLoader("DISPENSING...");
     }
+
+    // start the action
+    const startResp = await fetch(`/api/${type}`, {
+        method: type === 'return' ? "POST" : "GET",
+        headers: type === 'return' ? { "Content-Type": "application/json" } : undefined,
+        body: type === 'return' ? JSON.stringify({ id }) : undefined
+    });
+
+    if (!startResp.ok) {
+        hideLoader();
+        throw new Error("Failed to start action on machine");
+    }
+
+    // poll for status
+    let done = false;
+    const pollInterval = 300; // ms
+    while (!done) {
+        await new Promise(r => setTimeout(r, pollInterval));
+
+        const statusResp = await fetch(`/api/${type}_status?id=${id}`);
+        if (!statusResp.ok) continue;
+
+        const data = await statusResp.json();
+
+        if (type === 'return') {
+            // update loader mid-return
+            if (data.status === "returning") {
+                showLoader("Returning cassette...");
+            } else if (data.status === "done") {
+                done = true;
+            } else if (data.status === "timeout") {
+                hideLoader();
+                alert("Hardware timeout");
+                done = true;
+            }
+        } else if (type === 'dispense') {
+            if (data.status === "done") {
+                done = true;
+            } else if (data.status === "timeout") {
+                hideLoader();
+                alert("Hardware timeout");
+                done = true;
+            }
+        }
+    }
+
+    // final cleanup
+    hideLoader();
+    await loadData();
 }
 
 /* =========================

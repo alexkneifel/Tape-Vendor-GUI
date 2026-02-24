@@ -14,7 +14,8 @@ app = Flask(__name__, template_folder="../frontend", static_folder="../frontend"
 # Hardware Command Map
 COMMANDS = {
     "home": 0x01, "pickup": 0x02, "dropoff": 0x03, "goto": 0x04,
-    "servo": 0x05, "offset": 0x06, "cancel": 0x07, "remove" : 0x08
+    "servo": 0x05, "offset": 0x06, "cancel": 0x07, "remove" : 0x08, 
+    "entrance": 0x09, "dispense": 0x0A, "return": 0x0B
 }
 
 '''
@@ -53,33 +54,6 @@ def send_cmd():
                 return jsonify(status="Invalid offset value"), 400
         return jsonify(status=f"Executed {action}")
     return jsonify(status="Invalid Command"), 400
-
-'''
-Returns JSON of all cassettes in database.
-'''
-@app.route("/api/tapes")
-def get_tapes():
-    return jsonify(db.get_all_cassettes())
-
-'''
-Sends move commands to hardware.
-'''
-@app.route("/api/dispense")
-def dispense():
-    tape_id = request.args.get('id')
-    tape = db.get_tape_by_id(tape_id)
-    if tape:
-        # Single DB call handles everything
-        db.mark_dispensed(tape_id)
-        
-        # Hardware stuff...
-        serial_comm.send_byte(COMMANDS["home"])
-        serial_comm.send_byte(COMMANDS["pickup"])
-        serial_comm.send_byte(tape['slot_x'])
-        serial_comm.send_byte(tape['slot_y'])
-        
-        return jsonify(status="Dispensing...")
-    return jsonify(status="Tape not found"), 404
 
 
 '''
@@ -142,6 +116,38 @@ def add_tape():
         return jsonify(status="Error retrieving cassette"), 500
 
 '''
+Returns JSON of all cassettes in database.
+'''
+@app.route("/api/tapes")
+def get_tapes():
+    return jsonify(db.get_all_cassettes())
+
+'''
+Sends move commands to hardware.
+'''
+@app.route("/api/dispense")
+def dispense():
+    tape_id = request.args.get('id')
+    tape = db.get_tape_by_id(tape_id)
+    if not tape:
+        return jsonify(status="Tape not found"), 404
+
+    # 1️⃣ Mark in DB immediately
+    db.mark_dispensed(tape_id)
+
+    serial_comm.send_byte(COMMANDS["dispense"])
+    serial_comm.send_byte(tape['slot_x'])
+    serial_comm.send_byte(tape['slot_y'])
+
+    if not serial_comm.wait_for_arduino():
+        return jsonify(status="Hardware timeout"), 500
+
+    # ✅ All done
+    return jsonify(status="done")
+
+return_status = {}  # { tape_id: "waiting" | "in_progress" | "done" }
+
+'''
 When a tape is returned, it changes it to present in database.
 Option to send serial commands here since the tape is returned.
 '''
@@ -149,15 +155,44 @@ Option to send serial commands here since the tape is returned.
 def return_tape():
     tape_id = request.args.get('id')
     tape = db.get_tape_by_id(tape_id)
-    if tape:
-        # 1. (Optional) Send hardware command to physical return mechanism
-        # serial_comm.send_byte(COMMANDS["home"])
-        # serial_comm.send_byte(COMMANDS["dropoff"])
-        
-        # 2. Update DB: Set in_machine to 1
-        db.update_status(tape_id, 1) 
-        return jsonify(status="Tape returned to machine")
-    return jsonify(status="Tape not found"), 404
+    if not tape:
+        return jsonify(status="Tape not found"), 404
+    
+    return_status[tape_id] = "waiting_for_insert"
+
+    # Optional: Send hardware commands for dropoff
+    serial_comm.send_byte(COMMANDS["return"])
+    serial_comm.send_byte(tape['slot_x'])
+    serial_comm.send_byte(tape['slot_y'])
+    #TODO UI should prompt for cassette to be inserted
+    #once it's detected in the entrance, arduino returns screen can change to returning tape
+
+    #wait once for cassette to be detected in the entrance
+    if not serial_comm.wait_for_arduino():
+        #this means cassette was never detected in entrance
+        return_status[tape_id] = "timeout"
+        return jsonify(status="Hardware timeout"), 500
+    
+    return_status[tape_id] = "returning"
+    #how do i change the UI from please insert tape to returning tape? 
+    if not serial_comm.wait_for_arduino():
+        return_status[tape_id] = "timeout"
+        #this means for some reason arduino never said it was done placing cassette on shelf
+        return jsonify(status="Hardware timeout"), 500
+    
+    # Update DB: tape is back in machine
+    db.update_status(tape_id, 1)
+    return_status[tape_id] = "done"
+
+    return jsonify(status="done")
+
+'''
+Endpoint for UI to poll the return status of a tape.'''
+@app.route("/api/return_status")
+def return_status_endpoint():
+    tape_id = request.args.get("id")
+    status = return_status.get(tape_id, "unknown")
+    return jsonify(status=status)
 
 '''
 Removes cassette from the database.
