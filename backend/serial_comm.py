@@ -3,19 +3,13 @@ import time
 import struct
 import serial.tools.list_ports
 
-arduino_port = None
 
-for port in serial.tools.list_ports.comports():
-    print(port.device, port.description)
-    if "usbmodem" in port.device:
-        arduino_port = port.device
-        break
-
-if arduino_port:
-    ser = serial.Serial(arduino_port, 9600, timeout=1)
-    print("Connected to", arduino_port)
-else:
-    print("Arduino not found")
+try:
+    ser = serial.Serial("/dev/serial0", 9600, timeout=1)
+    print("Connected to Arduino on GPIO UART")
+except serial.SerialException:
+    ser = None
+    print("Arduino not found on GPIO UART")
 
 '''
 send byte over serial port
