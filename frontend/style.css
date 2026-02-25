@@ -856,67 +856,53 @@ button:active::after {
     from { box-shadow: 0 0 5px #ff0000; border-color: #880000; }
     to { box-shadow: 0 0 20px #ff0000; border-color: #ff4400; }
 }
+/* --- 1. THE PERMANENT OVERLAYS (Lightweight) --- */
 
-/* Permanent Static Grain */
-/* 1. High-Contrast Grain/Static */
-/* We use a fractal noise SVG to ensure the grain is visible on low-res screens */
 .static-overlay-permanent {
     position: fixed;
     inset: 0;
     z-index: 10000;
     pointer-events: none;
-    opacity: 0.12; 
-    mix-blend-mode: hard-light;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 250 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-    animation: static-shift 0.15s steps(2) infinite;
+    opacity: 0.07;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 250 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    will-change: transform;
+    animation: static-shift 0.2s steps(2) infinite;
 }
 
-/* 2. Thicker Scanlines */
-/* On a 7" screen, 1px is too thin. 3px creates a better "interlaced" look. */
-.scanlines-permanent {
-    position: fixed;
-    inset: 0;
-    z-index: 10001;
-    pointer-events: none;
-    background: linear-gradient(
-        rgba(18, 16, 16, 0) 50%, 
-        rgba(0, 0, 0, 0.25) 50%
-    );
-    background-size: 100% 3px; 
-}
-
-/* 3. Deep Vignette & Tube Blur */
-.vignette-permanent {
-    position: fixed;
-    inset: 0;
-    z-index: 10002;
-    pointer-events: none;
-    background: radial-gradient(
-        circle,
-        rgba(0,0,0,0) 40%,
-        rgba(0,0,0,0.3) 80%,
-        rgba(0,0,0,0.7) 100%
-    );
-    /* This creates the slight "softness" of an analog tube */
-    backdrop-filter: blur(0.4px);
-}
-
-/* 4. Subtle RGB Phosphor Mask */
 .rgb-stripe {
     position: fixed;
     inset: 0;
     z-index: 9999;
     pointer-events: none;
-    opacity: 0.03;
+    opacity: 0.12; /* High visibility for 7" screen */
     background: repeating-linear-gradient(
         90deg,
-        #ff0000 0px 1px,
-        #00ff00 1px 2px,
-        #0000ff 2px 3px
+        rgba(255, 0, 0, 0.5) 0px 1px,
+        rgba(0, 255, 0, 0.5) 1px 2px,
+        rgba(0, 0, 255, 0.5) 2px 3px
     );
+    background-size: 3px 100%;
 }
 
-/* 5. Boot Screen & CRT Power-On Animation */
+.scanlines-permanent {
+    position: fixed;
+    inset: 0;
+    z-index: 10001;
+    pointer-events: none;
+    background: linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,0.25) 50%);
+    background-size: 100% 4px;
+}
+
+.vignette-permanent {
+    position: fixed;
+    inset: 0;
+    z-index: 10002;
+    pointer-events: none;
+    background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.4) 85%, rgba(0,0,0,0.8) 100%);
+}
+
+/* --- 2. THE BOOT SCREEN & JITTER --- */
+
 #boot-screen {
     position: fixed;
     inset: 0;
@@ -925,32 +911,42 @@ button:active::after {
     display: flex;
     justify-content: center;
     align-items: center;
-    transition: opacity 0.8s ease-out;
+    transition: opacity 0.6s ease-out;
+    overflow: hidden;
 }
 
 #crt-line {
     width: 100%;
-    height: 2px;
+    height: 4px;
     background: #fff;
-    box-shadow: 
-        0 0 15px #00ff66, 
-        0 0 40px #00ff66,
-        0 0 80px rgba(0, 255, 102, 0.6);
-    animation: crt-on 2s ease-out forwards;
+    /* Glow effect is fine as long as it's not a 'backdrop-filter' */
+    box-shadow: 0 0 20px #00ff66, 0 0 40px rgba(0, 255, 102, 0.8);
+    /* Combines the Bloom and the Jitter */
+    animation: 
+        crt-on 1.8s ease-out forwards,
+        v-sync-jitter 0.15s infinite; 
 }
 
-/* Animations */
+/* --- 3. ANIMATIONS (GPU Optimized) --- */
+
 @keyframes crt-on {
-    0% { transform: scaleX(0) scaleY(1); opacity: 0; }
-    10% { transform: scaleX(1) scaleY(1); opacity: 1; }
-    40% { transform: scaleX(1) scaleY(2); opacity: 1; }
-    100% { transform: scaleX(1.5) scaleY(600); opacity: 0; }
+    0% { transform: scaleX(0) scaleY(0.01); opacity: 0; }
+    10% { transform: scaleX(1) scaleY(0.01); opacity: 1; }
+    30% { transform: scaleX(1) scaleY(1); opacity: 1; }
+    /* The bloom: expands vertically to fill screen then fades */
+    100% { transform: scaleX(1.2) scaleY(300); opacity: 0; }
+}
+
+@keyframes v-sync-jitter {
+    0% { margin-left: 0; }
+    25% { margin-left: 2px; }
+    50% { margin-left: -1px; }
+    75% { margin-left: 3px; }
+    100% { margin-left: 0; }
 }
 
 @keyframes static-shift {
     0% { transform: translate(0,0); }
-    25% { transform: translate(-1%, 0.5%); }
-    50% { transform: translate(1%, -0.5%); }
-    75% { transform: translate(-0.5%, -1%); }
+    50% { transform: translate(-0.5%, -1%); }
     100% { transform: translate(0,0); }
 }
