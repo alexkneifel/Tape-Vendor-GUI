@@ -859,39 +859,80 @@ button:active::after {
 
 /* Permanent Static Grain */
 .static-overlay-permanent {
+
+
     position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    z-index: 10000; /* Higher than everything else */
-    opacity: 0.04;  /* Keep it VERY subtle for daily use */
+    inset: 0;
+    z-index: 10000;
     pointer-events: none;
-    background-image: repeating-radial-gradient(#fff 0 0.0001%, #000 0 0.0002%);
-    background-size: 100px 100px;
-    animation: static-flicker 0.15s infinite;
+
+    opacity: 0.05;
+
+    background-image:
+    repeating-linear-gradient(
+        0deg,
+        rgba(255,255,255,0.03) 0px,
+        rgba(0,0,0,0.03) 1px
+    ),
+    repeating-linear-gradient(
+        90deg,
+        rgba(255,255,255,0.02) 0px,
+        rgba(0,0,0,0.02) 1px
+    ),
+    repeating-linear-gradient(
+        45deg,
+        rgba(255,255,255,0.015) 0px,
+        rgba(0,0,0,0.015) 1px
+    );
+
+    animation: static-shift 0.2s steps(2) infinite;
 }
 
-/* Permanent Scanlines */
 .scanlines-permanent {
     position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
+    inset: 0;
     z-index: 10001;
     pointer-events: none;
-    background: linear-gradient(
-        rgba(18, 16, 16, 0) 50%, 
-        rgba(0, 0, 0, 0.2) 50% /* Very light to avoid eye strain */
+
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(0,0,0,0.18) 0px,
+        rgba(0,0,0,0.18) 1px,
+        rgba(0,0,0,0.04) 1px,
+        rgba(0,0,0,0.04) 2px
     );
-    background-size: 100% 3px;
+
+    background-size: 100% 2px;
 }
 
 /* Permanent Vignette (The "Tube" look) */
 .vignette-permanent {
     position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
+    inset: 0;
     z-index: 10002;
     pointer-events: none;
-    background: radial-gradient(circle, rgba(0,0,0,0) 70%, rgba(0,0,0,0.4) 100%);
+
+    background: radial-gradient(
+        ellipse at center,
+        rgba(0,0,0,0) 55%,
+        rgba(0,0,0,0.25) 85%,
+        rgba(0,0,0,0.5) 100%
+    );
+}
+
+.rgb-stripe {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.02;
+
+    background: repeating-linear-gradient(
+        90deg,
+        rgba(255,0,0,0.4) 0px 1px,
+        rgba(0,255,0,0.4) 1px 2px,
+        rgba(0,0,255,0.4) 2px 3px
+    );
 }
 
 /* Ensure the Boot Screen is still on top of these during startup */
@@ -944,11 +985,25 @@ button:active::after {
     100% { transform: translateY(-50%) scaleX(1.2) scaleY(800); opacity: 0; } /* Finishes the bloom */
 }
 
+@keyframes crt-flicker {
+    0%   { opacity: 0.05; }
+    50%  { opacity: 0.06; }
+    100% { opacity: 0.05; }
+}
+
 @keyframes static-flicker {
     0% { transform: translate(0,0); }
     10% { transform: translate(-1%, -1%); }
     30% { transform: translate(1%, 1%); }
     50% { transform: translate(-0.5%, 0.5%); }
     70% { transform: translate(1.5%, -1.5%); }
+    100% { transform: translate(0,0); }
+}
+
+@keyframes static-shift {
+    0%   { transform: translate(0,0); }
+    25%  { transform: translate(-0.5%, 0.5%); }
+    50%  { transform: translate(0.5%, -0.5%); }
+    75%  { transform: translate(-0.25%, -0.25%); }
     100% { transform: translate(0,0); }
 }
