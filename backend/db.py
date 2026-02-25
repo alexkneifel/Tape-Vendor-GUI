@@ -117,31 +117,32 @@ def find_closest_empty_slot():
 Inserts a new cassette into the database.
 name, artist, genre, listens, last_played, in_machine, slot_x, slot_y
 '''
-
 def add_cassette(name, artist, target_slot=None, tags=None):
     conn = get_db_connection()
     try:
         slot = target_slot
-            
         if not slot:
-            return None
+            return None, None
 
         tags_json = json.dumps(tags or [])
 
         print(f"SAVING TAPE: {name} TO SLOT: {slot[0]}, {slot[1]}")
 
-        conn.execute(
+        cursor = conn.cursor()  # <-- create a cursor
+        cursor.execute(
             """INSERT INTO cassettes 
                (name, artist, slot_x, slot_y, in_machine, tags) 
                VALUES (?, ?, ?, ?, 1, ?)""",
             (name, artist, slot[0], slot[1], tags_json)
         )
         conn.commit()
-        return slot
+
+        tape_id = cursor.lastrowid  # <-- get the ID of the inserted row
+        return slot, tape_id
 
     except Exception as e:
         print(f"CRITICAL DB ERROR: {e}")
-        return None
+        return None, None
     finally:
         conn.close()
 

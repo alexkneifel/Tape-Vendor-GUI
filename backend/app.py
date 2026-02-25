@@ -11,6 +11,9 @@ KIOSK_PROFILE = "/tmp/kiosk_profile"
 
 app = Flask(__name__, template_folder="../frontend", static_folder="../frontend", static_url_path="")
 
+return_status = {}
+dispense_status = {}  # { tape_id: "in_progress" | "done" | "timeout" }
+
 # Hardware Command Map
 COMMANDS = {
     "home": 0x01, "pickup": 0x02, "dropoff": 0x03, "goto": 0x04,
@@ -37,19 +40,14 @@ def send_cmd():
     
     if action in COMMANDS:
         serial_comm.send_byte(COMMANDS[action])
+        # If position is valid is handled at Arduino side, so we just send whatever we get from the UI here.
         if action in ["pickup", "dropoff", "goto", "remove"]:
-            if 0 < int(x) < 6 and 0 < int(y) < 12:
-                serial_comm.send_byte(int(x))
-                serial_comm.send_byte(int(y))
-            else:
-                return jsonify(status="Invalid slot coordinates"), 400
+            serial_comm.send_byte(int(x))
+            serial_comm.send_byte(int(y))
         elif action == "offset":
             try:
                 offset_val = float(x_offset)*10
-                if 0 < offset_val < 50: 
-                    serial_comm.send_byte(int(offset_val))
-                else:
-                    return jsonify(status="Offset out of bounds"), 400
+                serial_comm.send_byte(int(offset_val))
             except ValueError:
                 return jsonify(status="Invalid offset value"), 400
         return jsonify(status=f"Executed {action}")
@@ -60,6 +58,7 @@ def send_cmd():
 Adds a new cassette to the database.
 Checks if it's from the grid, then assigns it to database with the target slot.
 It doesn't seem to assign a slot if I add it from list.
+TODO: add should be doing the same thing as return, where it waits for the cassette to be physically inserted, then finds the closest slot and assigns it there.
 '''
 @app.route("/api/add", methods=["POST"])
 def add_tape():
@@ -89,9 +88,8 @@ def add_tape():
     if not name:
         return jsonify(status="Name required"), 400
 
-
     # Now we pass the found slot into the add_cassette function
-    slot = db.add_cassette(name, artist, target_slot, tags)
+    slot, tape_id = db.add_cassette(name, artist, target_slot, tags)
     
     
     if slot:
@@ -101,6 +99,7 @@ def add_tape():
 
     # Fetch the newly inserted cassette to return to UI
     # We use a fresh connection here, which is fine now that db.py handles timeouts
+
     conn = db.get_db_connection()
     c = conn.cursor()
     c.execute(
@@ -109,6 +108,14 @@ def add_tape():
     )
     new_tape = c.fetchone()
     conn.close()
+
+    return_status[tape_id] = "waiting_for_insert"
+
+    serial_comm.send_byte(COMMANDS["return"])
+    serial_comm.send_byte(slot[0])  # the actual X of the assigned slot
+    serial_comm.send_byte(slot[1])  # the actual Y
+
+    threading.Thread(target=handle_return, args=(tape_id,), daemon=True).start()
 
     if new_tape:
         return jsonify(dict(new_tape))
@@ -121,8 +128,6 @@ Returns JSON of all cassettes in database.
 @app.route("/api/tapes")
 def get_tapes():
     return jsonify(db.get_all_cassettes())
-
-dispense_status = {}  # { tape_id: "in_progress" | "done" | "timeout" }
 
 '''
 Sends move commands to hardware.
@@ -146,7 +151,6 @@ def dispense():
 
     return jsonify(status="started")
 
-return_status = {}
 
 '''
 When a tape is returned, it changes it to present in database.
@@ -208,11 +212,24 @@ def dispense_status_endpoint():
 
 '''
 Removes cassette from the database.
+TODO: this also should dispense the cassette that you remove
 '''
 @app.route("/api/remove", methods=["DELETE"])
 def remove_cassette():
     tape_id = request.args.get('id')
+    tape = db.get_tape_by_id(tape_id)
+    dispense_status[tape_id] = "in_progress"
+
+    # Send command immediately
+    serial_comm.send_byte(COMMANDS["remove"])
+    serial_comm.send_byte(tape['slot_x'])
+    serial_comm.send_byte(tape['slot_y'])
+
+    # Start background listener
+    threading.Thread(target=handle_dispense, args=(tape_id,), daemon=True).start()
+
     db.delete_cassette(tape_id)
+
     return jsonify(status="Removed")
 
 '''
@@ -220,6 +237,7 @@ Remove all cassettes from the database.
 '''
 @app.route("/api/remove_all", methods=["DELETE"])
 def remove_all_cassettes():
+    #assume person will remove cassettes by hand
     try:
         db.delete_all_cassettes()
         return jsonify(status="All cassettes removed")
@@ -242,6 +260,7 @@ auto_status = {
 
 '''
 Background thread to handle the auto-organize process.
+TODO: make it properly choose positions for the cassettes
 '''
 @app.route("/api/auto_organize", methods=["POST"])
 def auto_organize():
@@ -274,7 +293,7 @@ def handle_auto_organize(moves):
         auto_status["current"] = index + 1
 
         # Send SWITCH command
-        serial_comm.send_byte(0x0C)
+        serial_comm.send_byte(COMMANDS["switch"])
 
         # Send FROM position
         serial_comm.send_byte(int(move["from"]["x"]))
