@@ -858,66 +858,60 @@ button:active::after {
 }
 
 /* Permanent Static Grain */
+
+/* 1. Improved High-Contrast Static */
 .static-overlay-permanent {
-
-
     position: fixed;
     inset: 0;
     z-index: 10000;
     pointer-events: none;
-
-    opacity: 0.05;
-
-    background-image:
-    repeating-linear-gradient(
-        0deg,
-        rgba(255,255,255,0.03) 0px,
-        rgba(0,0,0,0.03) 1px
-    ),
-    repeating-linear-gradient(
-        90deg,
-        rgba(255,255,255,0.02) 0px,
-        rgba(0,0,0,0.02) 1px
-    ),
-    repeating-linear-gradient(
-        45deg,
-        rgba(255,255,255,0.015) 0px,
-        rgba(0,0,0,0.015) 1px
-    );
-
-    animation: static-shift 0.2s steps(2) infinite;
+    opacity: 0.12; /* Increased opacity for small screens */
+    
+    /* Using a high-contrast base64 noise texture often works better than gradients on Pi */
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    
+    /* Contrast-based blending ensures it doesn't just "wash out" the screen */
+    mix-blend-mode: hard-light; 
+    animation: static-shift 0.15s steps(3) infinite;
 }
 
+/* 2. Thicker, More Aggressive Scanlines */
 .scanlines-permanent {
     position: fixed;
     inset: 0;
     z-index: 10001;
     pointer-events: none;
 
-    background: repeating-linear-gradient(
-        0deg,
-        rgba(0,0,0,0.18) 0px,
-        rgba(0,0,0,0.18) 1px,
-        rgba(0,0,0,0.04) 1px,
-        rgba(0,0,0,0.04) 2px
+    /* On a 480p screen, 1px is too thin. We use 3px patterns here. */
+    background: linear-gradient(
+        rgba(18, 16, 16, 0) 50%, 
+        rgba(0, 0, 0, 0.3) 50%
     );
-
-    background-size: 100% 2px;
+    background-size: 100% 3px; 
 }
 
-/* Permanent Vignette (The "Tube" look) */
+/* 3. The "Glass" Distortion (Crucial for the 7" screen feel) */
 .vignette-permanent {
     position: fixed;
     inset: 0;
     z-index: 10002;
     pointer-events: none;
-
     background: radial-gradient(
-        ellipse at center,
-        rgba(0,0,0,0) 55%,
-        rgba(0,0,0,0.25) 85%,
-        rgba(0,0,0,0.5) 100%
+        circle,
+        rgba(0,0,0,0) 40%,
+        rgba(0,0,0,0.3) 80%,
+        rgba(0,0,0,0.7) 100%
     );
+    /* Mimics the slight blur at the edges of a real tube */
+    backdrop-filter: blur(0.4px);
+}
+
+/* Updated Animation for Snappier Movement */
+@keyframes static-shift {
+    0% { transform: translate(0,0); }
+    33% { transform: translate(-1%, -0.5%); }
+    66% { transform: translate(0.5%, 1%); }
+    100% { transform: translate(-0.5%, -1%); }
 }
 
 .rgb-stripe {
