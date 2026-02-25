@@ -858,39 +858,34 @@ button:active::after {
 }
 
 /* Permanent Static Grain */
-
-/* 1. Improved High-Contrast Static */
+/* 1. High-Contrast Grain/Static */
+/* We use a fractal noise SVG to ensure the grain is visible on low-res screens */
 .static-overlay-permanent {
     position: fixed;
     inset: 0;
     z-index: 10000;
     pointer-events: none;
-    opacity: 0.12; /* Increased opacity for small screens */
-    
-    /* Using a high-contrast base64 noise texture often works better than gradients on Pi */
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-    
-    /* Contrast-based blending ensures it doesn't just "wash out" the screen */
-    mix-blend-mode: hard-light; 
-    animation: static-shift 0.15s steps(3) infinite;
+    opacity: 0.12; 
+    mix-blend-mode: hard-light;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 250 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    animation: static-shift 0.15s steps(2) infinite;
 }
 
-/* 2. Thicker, More Aggressive Scanlines */
+/* 2. Thicker Scanlines */
+/* On a 7" screen, 1px is too thin. 3px creates a better "interlaced" look. */
 .scanlines-permanent {
     position: fixed;
     inset: 0;
     z-index: 10001;
     pointer-events: none;
-
-    /* On a 480p screen, 1px is too thin. We use 3px patterns here. */
     background: linear-gradient(
         rgba(18, 16, 16, 0) 50%, 
-        rgba(0, 0, 0, 0.3) 50%
+        rgba(0, 0, 0, 0.25) 50%
     );
     background-size: 100% 3px; 
 }
 
-/* 3. The "Glass" Distortion (Crucial for the 7" screen feel) */
+/* 3. Deep Vignette & Tube Blur */
 .vignette-permanent {
     position: fixed;
     inset: 0;
@@ -902,102 +897,60 @@ button:active::after {
         rgba(0,0,0,0.3) 80%,
         rgba(0,0,0,0.7) 100%
     );
-    /* Mimics the slight blur at the edges of a real tube */
+    /* This creates the slight "softness" of an analog tube */
     backdrop-filter: blur(0.4px);
 }
 
-/* Updated Animation for Snappier Movement */
-@keyframes static-shift {
-    0% { transform: translate(0,0); }
-    33% { transform: translate(-1%, -0.5%); }
-    66% { transform: translate(0.5%, 1%); }
-    100% { transform: translate(-0.5%, -1%); }
-}
-
+/* 4. Subtle RGB Phosphor Mask */
 .rgb-stripe {
     position: fixed;
     inset: 0;
-    pointer-events: none;
     z-index: 9999;
-    opacity: 0.02;
-
+    pointer-events: none;
+    opacity: 0.03;
     background: repeating-linear-gradient(
         90deg,
-        rgba(255,0,0,0.4) 0px 1px,
-        rgba(0,255,0,0.4) 1px 2px,
-        rgba(0,0,255,0.4) 2px 3px
+        #ff0000 0px 1px,
+        #00ff00 1px 2px,
+        #0000ff 2px 3px
     );
 }
 
-/* Ensure the Boot Screen is still on top of these during startup */
-#boot-screen {
-    z-index: 11000; 
-}
-/* boot screen animation*/
+/* 5. Boot Screen & CRT Power-On Animation */
 #boot-screen {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    inset: 0;
     background: #050505;
-    z-index: 9999;
-    overflow: hidden;
+    z-index: 11000;
     display: flex;
     justify-content: center;
     align-items: center;
-    transition: opacity 0.6s ease-out;
+    transition: opacity 0.8s ease-out;
 }
 
-/* 2. The Glowing/Blurred Line */
 #crt-line {
-    z-index: 1;
     width: 100%;
-    height: 4px; /* Slightly thicker for the blur core */
-    background: #fff; /* White core */
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%) scaleY(0);
-    
-    /* Multiple layers of glow: Green, then a wider soft blur */
+    height: 2px;
+    background: #fff;
     box-shadow: 
-        0 0 10px #00ff66, 
-        0 0 30px #00ff66, 
-        0 0 60px rgba(0, 255, 102, 0.5),
-        0 0 100px rgba(0, 255, 102, 0.2);
-    
-    animation: crt-on 2.5s ease-out forwards;
+        0 0 15px #00ff66, 
+        0 0 40px #00ff66,
+        0 0 80px rgba(0, 255, 102, 0.6);
+    animation: crt-on 2s ease-out forwards;
 }
 
-
-/* Enhanced CRT Animation */
+/* Animations */
 @keyframes crt-on {
-    0% { transform: translateY(-50%) scaleX(0) scaleY(0.01); opacity: 0; }
-    5% { transform: translateY(-50%) scaleX(1) scaleY(0.01); opacity: 1; } /* Snap is fast (5%) */
-    15% { opacity: 0.7; } 
-    30% { transform: translateY(-50%) scaleX(1) scaleY(1); opacity: 1; } /* Slowly starts growing */
-    100% { transform: translateY(-50%) scaleX(1.2) scaleY(800); opacity: 0; } /* Finishes the bloom */
-}
-
-@keyframes crt-flicker {
-    0%   { opacity: 0.05; }
-    50%  { opacity: 0.06; }
-    100% { opacity: 0.05; }
-}
-
-@keyframes static-flicker {
-    0% { transform: translate(0,0); }
-    10% { transform: translate(-1%, -1%); }
-    30% { transform: translate(1%, 1%); }
-    50% { transform: translate(-0.5%, 0.5%); }
-    70% { transform: translate(1.5%, -1.5%); }
-    100% { transform: translate(0,0); }
+    0% { transform: scaleX(0) scaleY(1); opacity: 0; }
+    10% { transform: scaleX(1) scaleY(1); opacity: 1; }
+    40% { transform: scaleX(1) scaleY(2); opacity: 1; }
+    100% { transform: scaleX(1.5) scaleY(600); opacity: 0; }
 }
 
 @keyframes static-shift {
-    0%   { transform: translate(0,0); }
-    25%  { transform: translate(-0.5%, 0.5%); }
-    50%  { transform: translate(0.5%, -0.5%); }
-    75%  { transform: translate(-0.25%, -0.25%); }
+    0% { transform: translate(0,0); }
+    25% { transform: translate(-1%, 0.5%); }
+    50% { transform: translate(1%, -0.5%); }
+    75% { transform: translate(-0.5%, -1%); }
     100% { transform: translate(0,0); }
 }
