@@ -871,6 +871,16 @@ button:active::after {
     animation: static-shift 0.1s steps(2) infinite;
 }
 
+.scanlines-permanent {
+    position: fixed;
+    inset: 0;
+    z-index: 10001;
+    pointer-events: none;
+    /* 3px size works best for 7-inch 480p screens */
+    background: linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,0.3) 50%);
+    background-size: 100% 3px;
+}
+
 /* 2. Enhanced Vignette with "Tube Flicker" */
 .vignette-permanent {
     position: fixed;
@@ -887,7 +897,7 @@ button:active::after {
     animation: edge-flicker 4s infinite;
 }
 
-/* 3. The Boot Screen & Refined Bloom Animation */
+/* 1. The Glitch Static (Your Reference Image Style) */
 #boot-screen {
     position: fixed;
     inset: 0;
@@ -896,74 +906,67 @@ button:active::after {
     display: flex;
     justify-content: center;
     align-items: center;
-    pointer-events: none;
-    /* This fades the black background out slightly AFTER the line blooms */
-    animation: boot-screen-fade 0.5s forwards 2.4s;
-}
-/* --- 1. BOOT SCREEN OPTIMIZATIONS --- */
-#boot-screen {
-    position: fixed;
-    inset: 0;
-    background: #050505;
-    z-index: 11000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    /* Use will-change to prep the Pi's GPU */
-    will-change: opacity;
+    overflow: hidden;
 }
 
+/* This creates the colorful "Broken Signal" look from your photo */
+#glitch-bars {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    /* Creating those color bars via a repeating gradient */
+    background: linear-gradient(90deg, 
+        rgba(255,0,0,0.3) 0% 15%, 
+        rgba(0,255,0,0.3) 15% 30%, 
+        rgba(0,0,255,0.3) 30% 45%, 
+        rgba(255,255,0,0.3) 45% 60%, 
+        rgba(255,0,255,0.3) 60% 75%, 
+        rgba(0,255,255,0.3) 75% 100%);
+    background-size: 200% 200%;
+    z-index: 2;
+    pointer-events: none;
+    animation: signal-scramble 0.2s steps(4) infinite;
+}
+
+/* 2. The CRT Line with "Expansion" physics */
 #crt-line {
-    z-index: 1;
+    z-index: 3;
     width: 100%;
     height: 4px;
     background: #fff;
     position: absolute;
     top: 50%;
-    
-    /* Hardware acceleration is key here */
-    will-change: transform, opacity;
-    transform: translateY(-50%) scaleX(0) scaleY(1);
-    
-    /* Reduced shadow complexity to keep FPS high */
-    box-shadow: 0 0 20px #00ff66, 0 0 40px rgba(0, 255, 102, 0.5);
-
-    animation: crt-on-smooth 2.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+    transform: translateY(-50%) scaleX(0);
+    box-shadow: 0 0 30px #00ff66;
+    animation: crt-power-on 2.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
 }
 
-/* --- 2. SMOOTH ANIMATION LOGIC --- */
-@keyframes crt-on-smooth {
-    0% { 
-        transform: translateY(-50%) scaleX(0) scaleY(1); 
-        opacity: 0; 
-    }
-    /* Snap open horizontally */
-    10% { 
-        transform: translateY(-50%) scaleX(1) scaleY(1); 
-        opacity: 1; 
-    }
-    /* Hold and let the 'jitter' happen */
-    25% { 
-        transform: translateY(-50%) scaleX(1) scaleY(1); 
-        opacity: 1;
-        background: #fff;
-    }
-    /* Smooth vertical expansion - Cubic Bezier makes this feel fluid */
-    60% { 
-        transform: translateY(-50%) scaleX(1) scaleY(150); 
-        opacity: 1;
-        background: #fff;
-    }
-    /* Final white-out fade */
-    100% { 
-        transform: translateY(-50%) scaleX(1) scaleY(200); 
-        opacity: 0;
-        background: #fff;
-    }
+/* 3. The Animations */
+@keyframes crt-power-on {
+    0% { transform: translateY(-50%) scaleX(0) scaleY(1); opacity: 0; }
+    5% { transform: translateY(-50%) scaleX(1) scaleY(1); opacity: 1; }
+    
+    /* Reveal the Glitch Bars at 15% */
+    15% { transform: translateY(-50%) scaleX(1) scaleY(1); }
+    
+    /* Bloom vertically into the Glitch Screen */
+    40% { transform: translateY(-50%) scaleX(1) scaleY(150); opacity: 1; }
+    
+    /* Turn the whole screen white before fading out */
+    80% { transform: translateY(-50%) scaleX(1) scaleY(200); opacity: 1; background: #fff; }
+    100% { transform: translateY(-50%) scaleX(1) scaleY(200); opacity: 0; background: #fff; }
 }
 
-@keyframes boot-screen-fade {
-    to { opacity: 0; visibility: hidden; }
+/* This makes the background 'jump' around like your photo */
+@keyframes signal-scramble {
+    0% { background-position: 0% 0%; filter: hue-rotate(0deg); opacity: 0.6; }
+    50% { background-position: 100% 100%; filter: hue-rotate(90deg); opacity: 0.8; }
+    100% { background-position: 50% 50%; filter: hue-rotate(180deg); opacity: 0.6; }
+}
+
+/* Final cleanup for the boot container */
+@keyframes boot-fade-out {
+    to { visibility: hidden; opacity: 0; }
 }
 
 @keyframes static-shift {
