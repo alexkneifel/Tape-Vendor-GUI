@@ -900,8 +900,7 @@ button:active::after {
     /* This fades the black background out slightly AFTER the line blooms */
     animation: boot-screen-fade 0.5s forwards 2.4s;
 }
-
-/* --- 2. Corrected Boot Animation --- */
+/* --- 1. BOOT SCREEN OPTIMIZATIONS --- */
 #boot-screen {
     position: fixed;
     inset: 0;
@@ -910,35 +909,57 @@ button:active::after {
     display: flex;
     justify-content: center;
     align-items: center;
-    /* This ensures the screen disappears after the line finishes blooming */
-    animation: boot-screen-exit 0.1s forwards 2.0s; 
+    /* Use will-change to prep the Pi's GPU */
+    will-change: opacity;
 }
 
 #crt-line {
     z-index: 1;
     width: 100%;
-    height: 6px;
+    height: 4px;
     background: #fff;
     position: absolute;
     top: 50%;
-    transform: translateY(-50%) scaleX(0) scaleY(0);
     
-    box-shadow: 
-        0 0 15px #ffffff, 
-        0 0 40px #00ff66, 
-        0 0 80px rgba(0, 255, 102, 0.7),
-        0 0 120px rgba(255, 255, 255, 0.4);
+    /* Hardware acceleration is key here */
+    will-change: transform, opacity;
+    transform: translateY(-50%) scaleX(0) scaleY(1);
+    
+    /* Reduced shadow complexity to keep FPS high */
+    box-shadow: 0 0 20px #00ff66, 0 0 40px rgba(0, 255, 102, 0.5);
 
-    animation: crt-on-perfect 2.5s ease-out forwards;
+    animation: crt-on-smooth 2.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
 }
-@keyframes crt-on-perfect {
-    0% { transform: translateY(-50%) scaleX(0) scaleY(0.01); opacity: 0; }
-    5% { transform: translateY(-50%) scaleX(1) scaleY(0.01); opacity: 1; } 
-    15% { opacity: 0.8; } 
-    30% { transform: translateY(-50%) scaleX(1) scaleY(1); opacity: 1; }
-    /* The Bloom: ScaleY(1000) ensures it fills even the tallest viewport aspect ratios */
-    70% { transform: translateY(-50%) scaleX(1.1) scaleY(1000); opacity: 1; background: #fff; }
-    100% { transform: translateY(-50%) scaleX(1.1) scaleY(1000); opacity: 0; background: #fff; }
+
+/* --- 2. SMOOTH ANIMATION LOGIC --- */
+@keyframes crt-on-smooth {
+    0% { 
+        transform: translateY(-50%) scaleX(0) scaleY(1); 
+        opacity: 0; 
+    }
+    /* Snap open horizontally */
+    10% { 
+        transform: translateY(-50%) scaleX(1) scaleY(1); 
+        opacity: 1; 
+    }
+    /* Hold and let the 'jitter' happen */
+    25% { 
+        transform: translateY(-50%) scaleX(1) scaleY(1); 
+        opacity: 1;
+        background: #fff;
+    }
+    /* Smooth vertical expansion - Cubic Bezier makes this feel fluid */
+    60% { 
+        transform: translateY(-50%) scaleX(1) scaleY(150); 
+        opacity: 1;
+        background: #fff;
+    }
+    /* Final white-out fade */
+    100% { 
+        transform: translateY(-50%) scaleX(1) scaleY(200); 
+        opacity: 0;
+        background: #fff;
+    }
 }
 
 @keyframes boot-screen-fade {
