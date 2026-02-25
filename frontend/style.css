@@ -908,21 +908,29 @@ button:active::after {
     overflow: hidden;
 }
 
-#glitch-bars {
+/* The Glitch Container: Fades in from nothing */
+#glitch-content {
     position: absolute;
     inset: 0;
-    opacity: 0; /* Hidden initially */
-    background: linear-gradient(90deg, 
-        rgba(255,0,0,0.4) 0% 15%, 
-        rgba(0,255,0,0.4) 15% 30%, 
-        rgba(0,0,255,0.4) 30% 45%, 
-        rgba(255,255,255,0.4) 45% 60%, 
-        rgba(255,0,255,0.4) 60% 75%, 
-        rgba(0,255,255,0.4) 75% 100%);
-    background-size: 150% 100%;
+    opacity: 0;
+    display: flex;
+    flex-direction: column;
+    /* Organic B&W static base */
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     z-index: 1;
-    /* This animation handles the "Fading In" and the "Scramble" */
-    animation: glitch-sequence 4.5s ease-in-out forwards;
+    /* Total 7.5s: Snap(0.5) + Fade-In(1) + Hold(5) + Reveal(1) */
+    animation: full-glitch-sequence 7.5s linear forwards;
+}
+
+#glitch-content::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, 
+        rgba(255,0,0,0.3), rgba(0,255,0,0.3), rgba(0,0,255,0.3), 
+        rgba(255,255,0,0.3), rgba(255,0,255,0.3), rgba(0,255,255,0.3));
+    background-size: 200% 100%;
+    animation: bars-shiver 0.15s steps(2) infinite;
 }
 
 #crt-line {
@@ -932,37 +940,43 @@ button:active::after {
     background: #fff;
     position: absolute;
     top: 50%;
-    transform: translateY(-50%) scaleX(0) scaleY(1);
-    box-shadow: 0 0 30px #00ff66, 0 0 60px rgba(0, 255, 102, 0.5);
-    /* Slower snap and expansion */
-    animation: crt-sequence 4.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+    transform: translateY(-50%) scaleX(0);
+    box-shadow: 0 0 30px #00ff66;
+    animation: crt-snap-and-bloom 7.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
 }
 
-/* --- 2. SEQUENCED KEYFRAMES --- */
+/* --- 2. SEQUENCED ANIMATIONS --- */
 
-@keyframes crt-sequence {
+@keyframes crt-snap-and-bloom {
     0% { transform: translateY(-50%) scaleX(0) scaleY(1); opacity: 0; }
-    /* 0.5s: CRT line snaps across the middle */
-    10% { transform: translateY(-50%) scaleX(1) scaleY(1); opacity: 1; }
-    /* 10% to 40%: The line stays as a "needle" while the signal warms up */
-    40% { transform: translateY(-50%) scaleX(1) scaleY(1); opacity: 1; }
-    /* 40% to 85%: Smooth vertical bloom */
+    /* 0.5s: Horizontal Snap */
+    7% { transform: translateY(-50%) scaleX(1) scaleY(1); opacity: 1; }
+    /* 1.5s: Vertical Bloom to full screen */
+    20% { transform: translateY(-50%) scaleX(1) scaleY(250); opacity: 1; }
+    /* HOLD until ~6.5s */
     85% { transform: translateY(-50%) scaleX(1) scaleY(250); opacity: 1; background: #fff; }
-    /* Final fade out */
+    /* Final Transition */
     100% { transform: translateY(-50%) scaleX(1) scaleY(250); opacity: 0; background: #fff; }
 }
 
-@keyframes glitch-sequence {
-    /* Hidden during the initial CRT snap */
-    0%, 15% { opacity: 0; transform: scaleY(0.01); }
-    /* 20%: The colored bars flicker into view behind the line */
-    20% { opacity: 0.8; transform: scaleY(0.01); background-position: 0% 0%; }
-    40% { opacity: 0.6; transform: scaleY(0.01); background-position: 100% 0%; }
-    /* 40%+: The bars expand vertically along with the CRT line */
-    85% { opacity: 0.8; transform: scaleY(250); }
-    100% { opacity: 0; transform: scaleY(250); }
+@keyframes full-glitch-sequence {
+    0%, 7% { opacity: 0; }
+    /* 7% to 20%: This is the FADE-IN of the static and colors */
+    20% { opacity: 1; transform: scale(1); }
+    /* The 5-second 'Struggle' */
+    21%, 85% { 
+        opacity: 1; 
+        transform: scale(1.01) translate(1px, -1px); 
+    }
+    /* Sudden shift to white before app reveals */
+    86% { opacity: 1; background: #fff; }
+    100% { opacity: 0; background: #fff; }
 }
 
+@keyframes bars-shiver {
+    0% { background-position: 0% 0%; filter: hue-rotate(0deg); }
+    100% { background-position: 100% 0%; filter: hue-rotate(90deg); }
+}
 /* Final cleanup for the boot container */
 @keyframes boot-fade-out {
     to { visibility: hidden; opacity: 0; }
