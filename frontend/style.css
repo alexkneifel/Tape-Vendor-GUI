@@ -27,9 +27,13 @@ html, body {
 }
 
 #main-menu {
+    opacity: 1; /* fully visible immediately */
+    position: relative;
+    z-index: 1; /* behind glitch */
+
     justify-content: center;
     align-items: center;
-    gap: 2vh; /* Use relative gaps */
+    gap: 2vh;
 }
 
 #directory-menu {
@@ -877,7 +881,7 @@ button:active::after {
     z-index: 10001;
     pointer-events: none;
     /* 3px size works best for 7-inch 480p screens */
-    background: linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,0.3) 50%);
+    background: linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,0.2) 50%);
     background-size: 100% 3px;
 }
 
@@ -890,8 +894,8 @@ button:active::after {
     background: radial-gradient(
         circle,
         rgba(0,0,0,0) 60%,
-        rgba(0,0,0,0.3) 85%,
-        rgba(0,0,0,0.6) 100%
+        rgba(0,0,0,0.15) 85%,
+        rgba(0,0,0,0.3) 100%
     );
     /* This adds that unstable voltage flicker on the screen edges you liked */
     animation: edge-flicker 4s infinite;
@@ -906,57 +910,50 @@ button:active::after {
     justify-content: center;
     align-items: center;
     overflow: hidden;
-    /* Hide the whole boot screen at the very end (7.5s) so you can click your app */
-    animation: boot-fade-out 0.1s forwards 7.5s; 
+    /* Hard cut to hidden at exactly 10 seconds */
+    animation: boot-fade-away 8s ease-in forwards;
 }
 
-/* --- THE GLITCH LAYER (Now fixed to show over the white line) --- */
+/* --- THE GLITCH LAYER --- */
 #glitch-content {
     position: absolute;
     inset: 0;
-    opacity: 0;
-    
-    /* CRITICAL FIX: Added a solid dark background so the white CRT line doesn't wash it out */
-    background-color: #111; 
-    
-    /* Organic B&W static base */
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    
-    /* CRITICAL FIX: z-index 3 ensures it renders on top of the CRT line */
-    z-index: 3; 
-    animation: full-glitch-sequence 7.5s linear forwards;
+    opacity: 1;
+    z-index: 3;
+
+    background-color: #000;
+
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+
+    animation:
+        monochrome-static-sequence 6s linear forwards, /* keeps static alive longer */
+        glitch-fade-out 1.5s ease-out 6s forwards,     /* fade starts at 6s */
+        static-brightness 0.12s infinite alternate;
 }
 
-/* The shifting color bars */
-#glitch-content::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    /* Boosted opacity slightly to 0.4 so they show up better against the static */
-    background: linear-gradient(90deg, 
-        rgba(255,0,0,0.4), rgba(0,255,0,0.4), rgba(0,0,255,0.4), 
-        rgba(255,255,0,0.4), rgba(255,0,255,0.4), rgba(0,255,255,0.4));
-    background-size: 200% 100%;
-    animation: bars-shiver 0.15s steps(2) infinite;
-}
 
-/* --- THE 'VIDEO 2' TEXT --- */
+/* --- BIG TOP-RIGHT VCR TEXT --- */
 .vcr-text {
     position: absolute;
-    top: 8%;
-    left: 5%;
-    color: #00ffff; /* Classic VCR light cyan/blue */
-    font-family: 'Courier New', Courier, monospace; /* Monospace for that retro digital feel */
-    font-size: 2.2rem;
+    top: 5%;      /* Near the top */
+    right: 5%;    /* In the right corner */
+    color: #00ffff; 
+    font-family: 'Courier New', Courier, monospace; 
+    font-size: 8rem; /* Much bigger text */
     font-weight: bold;
-    letter-spacing: 2px;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
+    letter-spacing: 5px;
+    text-shadow: 4px 4px 0px rgba(0,0,0,0.8);
     z-index: 4;
+
+    animation:
+        monochrome-static-sequence 6s linear forwards, /* keeps static alive longer */
+        glitch-fade-out 1.5s ease-out 6s forwards,     /* fade starts at 6s */
+        static-brightness 0.12s infinite alternate;
 }
 
 /* --- THE CRT LINE --- */
 #crt-line {
-    z-index: 2; /* Sits underneath the glitch content now */
+    z-index: 2; 
     width: 100%;
     height: 4px;
     background: #fff;
@@ -964,41 +961,67 @@ button:active::after {
     top: 50%;
     transform: translateY(-50%) scaleX(0);
     box-shadow: 0 0 30px #00ff66;
-    animation: crt-snap-and-bloom 7.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+    animation: crt-snap-and-bloom 10s cubic-bezier(0.23, 1, 0.32, 1) forwards;
 }
 
-/* --- SEQUENCED ANIMATIONS --- */
+/* --- 10-SECOND SEQUENCED ANIMATIONS --- */
+
+@keyframes monochrome-static-sequence {
+
+    0%, 15% {
+        opacity: 0;
+    }
+
+    25% {
+        opacity: 1;
+    }
+
+    60% {
+        opacity: 1;
+    }
+
+    /* fade out slower so it blends into menu */
+    100% {
+        opacity: 0;
+    }
+}
 
 @keyframes crt-snap-and-bloom {
     0% { transform: translateY(-50%) scaleX(0) scaleY(1); opacity: 0; }
-    7% { transform: translateY(-50%) scaleX(1) scaleY(1); opacity: 1; }
-    20% { transform: translateY(-50%) scaleX(1) scaleY(250); opacity: 1; }
-    85% { transform: translateY(-50%) scaleX(1) scaleY(250); opacity: 1; background: #fff; }
-    100% { transform: translateY(-50%) scaleX(1) scaleY(250); opacity: 0; background: #fff; }
+    /* 0.5s: Snaps open horizontally */
+    5% { transform: translateY(-50%) scaleX(1) scaleY(1); opacity: 1; box-shadow: 0 0 30px #00ff66; }
+    
+    /* PERFORMANCE: Shadow is removed right here to keep the vertical expansion smooth */
+    6% { box-shadow: none; }
+    
+    /* 1.5s: Blooms vertically */
+    15% { transform: translateY(-50%) scaleX(1) scaleY(250); opacity: 1; }
+    
+    /* Keep it solid until the very end */
+    100% { transform: translateY(-50%) scaleX(1) scaleY(250); opacity: 1; }
 }
 
-@keyframes full-glitch-sequence {
-    0%, 7% { opacity: 0; }
-    /* Fades in between 7% and 20% */
-    20% { opacity: 1; transform: scale(1); }
-    /* The 5-second 'Struggle' */
-    21%, 85% { 
-        opacity: 1; 
-        transform: scale(1.01) translate(1px, -1px); 
+
+
+@keyframes boot-fade-away {
+
+    0% {
+        opacity: 1;
     }
-    /* Sudden shift to white flash before app reveals */
-    86% { opacity: 1; background: #fff; }
-    100% { opacity: 0; background: #fff; }
+
+    /* hold fully visible while static plays */
+    80% {
+        opacity: 1;
+    }
+
+    /* fade entire layer out */
+    100% {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+    }
 }
 
-@keyframes bars-shiver {
-    0% { background-position: 0% 0%; filter: hue-rotate(0deg); }
-    100% { background-position: 100% 0%; filter: hue-rotate(90deg); }
-}
-
-@keyframes boot-fade-out {
-    to { visibility: hidden; opacity: 0; pointer-events: none; }
-}
 
 @keyframes static-shift {
     0% { transform: translate(0, 0); }
@@ -1011,4 +1034,18 @@ button:active::after {
     5%, 10% { opacity: 0.95; }
     7% { opacity: 1; }
     50% { opacity: 0.98; }
+}
+
+@keyframes static-brightness {
+    from { filter: brightness(0.85); }
+    to   { filter: brightness(0.9); }
+}
+
+@keyframes glitch-fade-out {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
 }
