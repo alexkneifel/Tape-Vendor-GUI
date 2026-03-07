@@ -652,10 +652,17 @@ async function submitNewCassette()
         });
 
         if (res.ok) {
-            const tape = await res.json();   // ← get the tape object from Flask
+            const tape = await res.json();
+
+            // Show loader immediately
+            showLoader("HOMING SYSTEM...");
+
+            // Close modal AFTER loader is visible
             closeAddModal();
+
+            // Start polling
             monitorReturn(tape.id);
-        } else {
+        }   else {
             const errorData = await res.json().catch(() => ({}));
             alert(errorData.status || "Error adding tape");
         }
