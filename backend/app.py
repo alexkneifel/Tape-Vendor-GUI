@@ -174,14 +174,21 @@ def return_tape():
     return jsonify(status="started")
 
 def handle_return(tape_id):
-    # Stage 1: wait for cassette inserted
+
+    return_status[tape_id] = "homing"
+
+    if not serial_comm.wait_for_arduino():
+        return_status[tape_id] = "timeout"
+        return
+
+    return_status[tape_id] = "waiting_for_insert"
+
     if not serial_comm.wait_for_arduino():
         return_status[tape_id] = "timeout"
         return
 
     return_status[tape_id] = "returning"
 
-    # Stage 2: wait for shelf placement finished
     if not serial_comm.wait_for_arduino():
         return_status[tape_id] = "timeout"
         return

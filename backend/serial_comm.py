@@ -23,17 +23,6 @@ def send_byte(byte_value):
         print(f"MOCK UART SENT BYTE: {hex(byte_value)}")
 
 '''
-send float over serial port
-'''
-def send_float(float_value):
-    if ser and ser.is_open:
-        # Pack float into 4 bytes (IEEE 754)
-        ser.write(struct.pack('f', float_value))
-        print(f"UART SENT FLOAT: {float_value}")
-    else:
-        print(f"MOCK UART SENT FLOAT: {float_value}")
-
-'''
 receive byte over serial
 '''
 def receive_byte():
