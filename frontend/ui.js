@@ -652,8 +652,8 @@ async function submitNewCassette()
         });
 
         if (res.ok) {
+            const tape = await res.json();   // ← get the tape object from Flask
             closeAddModal();
-            showLoader("HOMING SYSTEM...");
             monitorReturn(tape.id);
         } else {
             const errorData = await res.json().catch(() => ({}));
