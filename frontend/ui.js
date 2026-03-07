@@ -653,8 +653,8 @@ async function submitNewCassette()
 
         if (res.ok) {
             closeAddModal();
-            await loadData(); 
-            renderCurrentView(); 
+            showLoader("HOMING SYSTEM...");
+            monitorReturn(tape.id);
         } else {
             const errorData = await res.json().catch(() => ({}));
             alert(errorData.status || "Error adding tape");
@@ -665,6 +665,47 @@ async function submitNewCassette()
         submitBtn.disabled = false;
         submitBtn.textContent = "ADD";
     }
+}
+
+async function monitorReturn(id) {
+
+    let lastStatus = null;
+
+    while (true) {
+
+        await new Promise(r => setTimeout(r, 300));
+
+        const res = await fetch(`/api/return_status?id=${id}`);
+        if (!res.ok) continue;
+
+        const { status } = await res.json();
+
+        if (status === lastStatus) continue;
+        lastStatus = status;
+
+        if (status === "homing") {
+        showLoader("HOMING SYSTEM...");
+        }
+        else if (status === "waiting_for_insert") {
+            showLoader("PLEASE INSERT CASSETTE...");
+        }
+
+        else if (status === "returning") {
+            showLoader("PLACING CASSETTE...");
+        }
+
+        else if (status === "done") {
+            break;
+        }
+
+        else if (status === "timeout") {
+            alert("Hardware timeout");
+            break;
+        }
+    }
+
+    hideLoader();
+    await loadData();
 }
 
 /* =========================
