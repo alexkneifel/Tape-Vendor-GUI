@@ -116,7 +116,7 @@ def add_tape():
     serial_comm.send_byte(slot[0])  # the actual X of the assigned slot
     serial_comm.send_byte(slot[1])  # the actual Y
 
-    threading.Thread(target=handle_return, args=(tape_id,), daemon=True).start()
+    threading.Thread(target=handle_return, args=(tape_id, "add"), daemon=True).start()
 
     if new_tape:
         return jsonify(dict(new_tape))
@@ -174,28 +174,34 @@ def return_tape():
     serial_comm.send_byte(tape['slot_x'])
     serial_comm.send_byte(tape['slot_y'])
 
-    threading.Thread(target=handle_return, args=(tape_id,), daemon=True).start()
+    threading.Thread(target=handle_return, args=(tape_id, "return"), daemon=True).start()
 
     return jsonify(status="started")
 
-def handle_return(tape_id):
+def handle_return(tape_id, type):
 
     return_status[tape_id] = "homing"
 
     if not serial_comm.wait_for_arduino():
         return_status[tape_id] = "timeout"
+        if type == "add":
+            db.delete_cassette(tape_id)  # Remove the cassette entry if it was an add operation that failed
         return
 
     return_status[tape_id] = "waiting_for_insert"
 
     if not serial_comm.wait_for_arduino():
         return_status[tape_id] = "timeout"
+        if type == "add":
+            db.delete_cassette(tape_id)  
         return
 
     return_status[tape_id] = "returning"
 
     if not serial_comm.wait_for_arduino():
         return_status[tape_id] = "timeout"
+        if type == "add":
+            db.delete_cassette(tape_id)  
         return
 
     db.update_status(tape_id, 1)
