@@ -392,82 +392,68 @@ function closeModal()
  * @param {string} type - 'dispense' or 'return'
  * @returns {Promise<void>}
  */
-async function actionTape(id, type) {
+async function actionTape(id, type) 
+{
     closeModal();
 
-    // ---- Initial UI state ----
-    if (type === "return") {
-        showLoader("Please insert cassette...");
-    } else {
-        showLoader("DISPENSING...");
-    }
+    // 1. Initial UI Kick-off
+    const initialMsg = type === "return" ? "PREPARING ENTRANCE..." : "DISPENSING...";
+    showLoader(initialMsg);
 
-    // ---- Start hardware action ----
+    // 2. Start the hardware process
     const startResp = await fetch(`/api/${type}?id=${id}`);
     if (!startResp.ok) {
         hideLoader();
-        alert("Failed to start machine");
+        alert(`Failed to start ${type} sequence`);
         return;
     }
 
-    // ---- Poll for status ----
-    const pollInterval = 300;
+    // 3. Define the messages for each state
+    const statusMessages = {
+        // Return states
+        "homing": "MOVING TO ENTRANCE...",
+        "waiting_for_insert": "PLEASE INSERT CASSETTE...",
+        "returning": "PLACING CASSETTE...",
+        // Dispense states
+        "in_progress": "DISPENSING...",
+        "moving_to_slot": "HEADING TO SLOT...",
+        "ejecting": "EJECTING TAPE..."
+    };
+
     let lastStatus = null;
 
+    // 4. Unified Polling Loop
     while (true) {
-        await new Promise(r => setTimeout(r, pollInterval));
+        await new Promise(r => setTimeout(r, 300));
 
         const statusResp = await fetch(`/api/${type}_status?id=${id}`);
         if (!statusResp.ok) continue;
 
         const { status } = await statusResp.json();
 
-        // Prevent unnecessary UI re-renders
-        if (status === lastStatus) continue;
+        // Skip if nothing changed or if status is "unknown" (the string/int bug)
+        if (status === lastStatus || status === "unknown") continue;
         lastStatus = status;
 
-        // ---- RETURN STATE MACHINE ----
-        if (type === "return") {
-
-            if (status === "waiting_for_insert") {
-                showLoader("Please insert cassette...");
-            }
-
-            else if (status === "returning") {
-                showLoader("Returning cassette...");
-            }
-
-            else if (status === "done") {
-                break;
-            }
-
-            else if (status === "timeout") {
-                alert("Hardware timeout");
-                break;
-            }
+        // Success condition
+        if (status === "done") {
+            break;
         }
 
-        // ---- DISPENSE ----
-        else if (type === "dispense") {
-
-            if (status === "in_progress") {
-                showLoader("DISPENSING...");
-            }
-
-            else if (status === "done") {
-                break;
-            }
-
-            else if (status === "timeout") {
-                alert("Hardware timeout");
-                break;
-            }
+        // Error condition
+        if (status === "timeout") {
+            alert("MECHANICAL TIMEOUT: NO RESPONSE FROM HARDWARE");
+            break;
         }
+
+        // Update UI with the appropriate message
+        const msg = statusMessages[status] || "MECHANISM ACTIVE...";
+        showLoader(msg);
     }
 
-    // ---- Final Cleanup ----
+    // 5. Cleanup
     hideLoader();
-    await loadData();
+    await loadData(); // Refresh the list to show the new tape or updated location
 }
 
 /* =========================
@@ -655,13 +641,13 @@ async function submitNewCassette()
             const tape = await res.json();
 
             // Show loader immediately
-            showLoader("HOMING SYSTEM...");
+            showLoader("MOVING TO ENTRANCE...");
 
             // Close modal AFTER loader is visible
             closeAddModal();
 
             // Start polling
-            monitorReturn(tape.id);
+            actionTape(tape.id, "return");
         }   else {
             const errorData = await res.json().catch(() => ({}));
             alert(errorData.status || "Error adding tape");
@@ -674,46 +660,6 @@ async function submitNewCassette()
     }
 }
 
-async function monitorReturn(id) {
-
-    let lastStatus = null;
-
-    while (true) {
-
-        await new Promise(r => setTimeout(r, 300));
-
-        const res = await fetch(`/api/return_status?id=${id}`);
-        if (!res.ok) continue;
-
-        const { status } = await res.json();
-
-        if (status === lastStatus) continue;
-        lastStatus = status;
-
-        if (status === "homing") {
-        showLoader("HOMING SYSTEM...");
-        }
-        else if (status === "waiting_for_insert") {
-            showLoader("PLEASE INSERT CASSETTE...");
-        }
-
-        else if (status === "returning") {
-            showLoader("PLACING CASSETTE...");
-        }
-
-        else if (status === "done") {
-            break;
-        }
-
-        else if (status === "timeout") {
-            alert("Hardware timeout");
-            break;
-        }
-    }
-
-    hideLoader();
-    await loadData();
-}
 
 /* =========================
    10. REMOVE CASSETTE
