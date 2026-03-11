@@ -91,7 +91,7 @@ def add_tape():
     # Now we pass the found slot into the add_cassette function
     slot, tape_id = db.add_cassette(name, artist, target_slot, tags)
 
-    tape_id = str(tape_id)
+    tape_id_str = str(tape_id)
     
     if slot:
         print(f"Added cassette '{name}' by '{artist}' at slot {slot} with tags {tags}")
@@ -110,7 +110,7 @@ def add_tape():
     new_tape = c.fetchone()
     conn.close()
 
-    return_status[tape_id] = "homing"
+    return_status[tape_id_str] = "homing"
 
     serial_comm.send_byte(COMMANDS["return"])
     serial_comm.send_byte(slot[0])  # the actual X of the assigned slot
@@ -140,9 +140,9 @@ def dispense():
     if not tape:
         return jsonify(status="Tape not found"), 404
     
-    tape_id = str(tape_id)
+    tape_id_str = str(tape_id)
 
-    dispense_status[tape_id] = "in_progress"
+    dispense_status[tape_id_str] = "in_progress"
 
     # Send command immediately
     serial_comm.send_byte(COMMANDS["dispense"])
@@ -166,9 +166,9 @@ def return_tape():
     if not tape:
         return jsonify(status="Tape not found"), 404
 
-    tape_id = str(tape_id)
+    tape_id_str = str(tape_id)
     
-    return_status[tape_id] = "homing"
+    return_status[tape_id_str] = "homing"
 
     serial_comm.send_byte(COMMANDS["return"])
     serial_comm.send_byte(tape['slot_x'])
@@ -180,68 +180,68 @@ def return_tape():
 
 def handle_return(tape_id, type):
 
-    return_status[tape_id] = "homing"
+    tape_id_str = str(tape_id)
+
+    return_status[tape_id_str] = "homing"
 
     if not serial_comm.wait_for_arduino():
-        return_status[tape_id] = "timeout"
+        return_status[tape_id_str] = "timeout"
         if type == "add":
             db.delete_cassette(tape_id)  # Remove the cassette entry if it was an add operation that failed
         return
 
-    return_status[tape_id] = "waiting_for_insert"
+    return_status[tape_id_str] = "waiting_for_insert"
 
     if not serial_comm.wait_for_arduino():
-        return_status[tape_id] = "timeout"
+        return_status[tape_id_str] = "timeout"
         if type == "add":
             db.delete_cassette(tape_id)  
         return
 
-    return_status[tape_id] = "returning"
+    return_status[tape_id_str] = "returning"
 
     if not serial_comm.wait_for_arduino():
-        return_status[tape_id] = "timeout"
+        return_status[tape_id_str] = "timeout"
         if type == "add":
             db.delete_cassette(tape_id)  
         return
 
     db.update_status(tape_id, 1)
-    return_status[tape_id] = "done"
+    return_status[tape_id_str] = "done"
+
 
 '''
 Endpoint for UI to poll the return status of a tape.'''
 @app.route("/api/return_status")
 def return_status_endpoint():
     tape_id = request.args.get("id")
-    status = return_status.get(tape_id, "unknown")
+    tape_id_str = str(tape_id)
+    status = return_status.get(tape_id_str, "unknown")
     return jsonify(status=status)
 
 def handle_dispense(tape_id):
+    tape_id_str = str(tape_id)
 
-    dispense_status[tape_id] = "in_progress"
+    dispense_status[tape_id_str] = "in_progress"
 
     if not serial_comm.wait_for_arduino():
-        dispense_status[tape_id] = "timeout"
+        dispense_status[tape_id_str] = "timeout"
         return
 
-    dispense_status[tape_id] = "moving_to_slot"
+    dispense_status[tape_id_str] = "ejecting"
 
     if not serial_comm.wait_for_arduino():
-        dispense_status[tape_id] = "timeout"
-        return
-
-    dispense_status[tape_id] = "ejecting"
-
-    if not serial_comm.wait_for_arduino():
-        dispense_status[tape_id] = "timeout"
+        dispense_status[tape_id_str] = "timeout"
         return
 
     db.update_status(tape_id, 1)
-    dispense_status[tape_id] = "done"
+    dispense_status[tape_id_str] = "done"
 
 @app.route("/api/dispense_status")
 def dispense_status_endpoint():
     tape_id = request.args.get("id")
-    status = dispense_status.get(tape_id, "unknown")
+    tape_id_str = str(tape_id)
+    status = dispense_status.get(tape_id_str, "unknown")
     return jsonify(status=status)
 
 '''

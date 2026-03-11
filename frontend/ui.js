@@ -416,7 +416,6 @@ async function actionTape(id, type)
         "returning": "PLACING CASSETTE...",
         // Dispense states
         "in_progress": "DISPENSING...",
-        "moving_to_slot": "HEADING TO SLOT...",
         "ejecting": "EJECTING TAPE..."
     };
 
