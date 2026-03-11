@@ -397,7 +397,7 @@ async function actionTape(id, type)
     closeModal();
 
     // 1. Initial UI Kick-off
-    const initialMsg = type === "return" ? "PREPARING ENTRANCE..." : "DISPENSING...";
+    const initialMsg = type === "return" ? "MOVING TO ENTRANCE..." : "DISPENSING...";
     showLoader(initialMsg);
 
     // 2. Start the hardware process

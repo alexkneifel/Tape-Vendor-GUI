@@ -214,19 +214,19 @@ def handle_dispense(tape_id):
     return_status[tape_id] = "in_progress"
 
     if not serial_comm.wait_for_arduino():
-        return_status[tape_id] = "timeout"
+        dispense_status[tape_id] = "timeout"
         return
 
-    return_status[tape_id] = "waiting_for_insert"
+    dispense_status[tape_id] = "moving_to_slot"
 
     if not serial_comm.wait_for_arduino():
-        return_status[tape_id] = "timeout"
+        dispense_status[tape_id] = "timeout"
         return
 
-    return_status[tape_id] = "returning"
+    dispense_status[tape_id] = "ejecting"
 
     if not serial_comm.wait_for_arduino():
-        return_status[tape_id] = "timeout"
+        dispense_status[tape_id] = "timeout"
         return
 
     db.update_status(tape_id, 1)
@@ -240,21 +240,21 @@ def dispense_status_endpoint():
 
 '''
 Removes cassette from the database.
-TODO: this also should dispense the cassette that you remove
+TODO: I might want this to dispense the cassette to the entrance.
 '''
 @app.route("/api/remove", methods=["DELETE"])
 def remove_cassette():
     tape_id = request.args.get('id')
     tape = db.get_tape_by_id(tape_id)
-    dispense_status[tape_id] = "in_progress"
+    # dispense_status[tape_id] = "in_progress"
 
-    # Send command immediately
-    serial_comm.send_byte(COMMANDS["remove"])
-    serial_comm.send_byte(tape['slot_x'])
-    serial_comm.send_byte(tape['slot_y'])
+    # # Send command immediately
+    # serial_comm.send_byte(COMMANDS["remove"])
+    # serial_comm.send_byte(tape['slot_x'])
+    # serial_comm.send_byte(tape['slot_y'])
 
-    # Start background listener
-    threading.Thread(target=handle_dispense, args=(tape_id,), daemon=True).start()
+    # # Start background listener
+    # threading.Thread(target=handle_dispense, args=(tape_id,), daemon=True).start()
 
     db.delete_cassette(tape_id)
 
