@@ -234,7 +234,7 @@ def handle_dispense(tape_id):
         dispense_status[tape_id_str] = "timeout"
         return
 
-    db.update_status(tape_id, 1)
+    db.update_status(tape_id, 0)
     dispense_status[tape_id_str] = "done"
 
 @app.route("/api/dispense_status")
