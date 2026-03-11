@@ -90,7 +90,8 @@ def add_tape():
 
     # Now we pass the found slot into the add_cassette function
     slot, tape_id = db.add_cassette(name, artist, target_slot, tags)
-    
+
+    tape_id = str(tape_id)
     
     if slot:
         print(f"Added cassette '{name}' by '{artist}' at slot {slot} with tags {tags}")
@@ -109,7 +110,7 @@ def add_tape():
     new_tape = c.fetchone()
     conn.close()
 
-    return_status[tape_id] = "waiting_for_insert"
+    return_status[str(tape_id)] = "homing"
 
     serial_comm.send_byte(COMMANDS["return"])
     serial_comm.send_byte(slot[0])  # the actual X of the assigned slot
