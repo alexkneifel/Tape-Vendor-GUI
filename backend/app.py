@@ -211,7 +211,7 @@ def return_status_endpoint():
 
 def handle_dispense(tape_id):
 
-    return_status[tape_id] = "in_progress"
+    dispense_status[tape_id] = "in_progress"
 
     if not serial_comm.wait_for_arduino():
         dispense_status[tape_id] = "timeout"
@@ -230,7 +230,7 @@ def handle_dispense(tape_id):
         return
 
     db.update_status(tape_id, 1)
-    return_status[tape_id] = "done"
+    dispense_status[tape_id] = "done"
 
 @app.route("/api/dispense_status")
 def dispense_status_endpoint():
