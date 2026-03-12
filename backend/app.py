@@ -94,8 +94,6 @@ def add_tape():
 
     # Now we pass the found slot into the add_cassette function
     slot, tape_id = db.add_cassette(name, artist, target_slot, tags)
-
-    tape_id_str = str(tape_id)
     
     if slot:
         print(f"Added cassette '{name}' by '{artist}' at slot {slot} with tags {tags}")
@@ -105,24 +103,7 @@ def add_tape():
     # Fetch the newly inserted cassette to return to UI
     # We use a fresh connection here, which is fine now that db.py handles timeouts
 
-    conn = db.get_db_connection()
-    c = conn.cursor()
-    c.execute(
-        "SELECT * FROM cassettes WHERE name = ? AND slot_x = ? AND slot_y = ?",
-        (name, slot[0], slot[1])
-    )
-    new_tape = c.fetchone()
-    conn.close()
-
-    return_status[tape_id_str] = "homing"
-
-    serial_comm.clear_buffer()
-
-    serial_comm.send_byte(COMMANDS["return"])
-    serial_comm.send_byte(slot[0])  # the actual X of the assigned slot
-    serial_comm.send_byte(slot[1])  # the actual Y
-
-    threading.Thread(target=handle_return, args=(tape_id, "add"), daemon=True).start()
+    new_tape = db.get_tape_by_id(tape_id)
 
     if new_tape:
         return jsonify(dict(new_tape))
