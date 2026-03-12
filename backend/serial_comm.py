@@ -22,29 +22,30 @@ def send_byte(byte_value):
     else:
         print(f"MOCK UART SENT BYTE: {hex(byte_value)}")
 
-'''
-receive byte over serial
-'''
-def receive_byte():
-    if ser and ser.is_open:
-        if ser.in_waiting > 0:  # Check if data is sitting in the buffer
-            incoming = ser.read(1)
-            if incoming:
-                byte_value = incoming[0]
-            print(f"UART RECEIVED BYTE: {hex(byte_value)}")
-            return byte_value
-    return None
 
-'''
-wait for next process based on the arduino message.
-'''
+def clear_buffer():
+    """Wipes out any stale 'ghost bytes' from previous operations."""
+    if ser and ser.is_open:
+        ser.reset_input_buffer()
+        print("UART input buffer cleared.")
+
 def wait_for_arduino(expected_byte=0x4B): # 0x4B is ASCII 'K' for OK
     print("Waiting for Arduino confirmation...")
     timeout = time.time() + 35  # 35 second timeout
     
     while time.time() < timeout:
-        received = receive_byte()
-        if received == expected_byte:
-            return True
-        time.sleep(0.1) # Don't hog the CPU
+        if ser and ser.is_open:
+            if ser.in_waiting > 0:
+                # Read ALL available bytes at once to clear traffic jams
+                incoming = ser.read(ser.in_waiting)
+                
+                # Check if our expected byte is anywhere in that chunk
+                for byte_value in incoming:
+                    print(f"UART RECEIVED BYTE: {hex(byte_value)}")
+                    if byte_value == expected_byte:
+                        return True
+                        
+        time.sleep(0.05) # Sleep 50ms (checks 20 times a second)
+        
+    print("UART TIMEOUT: Arduino did not respond in time.")
     return False

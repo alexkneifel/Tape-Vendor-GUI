@@ -39,6 +39,7 @@ def send_cmd():
     x_offset = request.args.get('x_offset', '1')
     
     if action in COMMANDS:
+        serial_comm.clear_buffer()
         serial_comm.send_byte(COMMANDS[action])
         # If position is valid is handled at Arduino side, so we just send whatever we get from the UI here.
         if action in ["pickup", "dropoff", "goto", "remove"]:
@@ -112,6 +113,8 @@ def add_tape():
 
     return_status[tape_id_str] = "homing"
 
+    serial_comm.clear_buffer()
+
     serial_comm.send_byte(COMMANDS["return"])
     serial_comm.send_byte(slot[0])  # the actual X of the assigned slot
     serial_comm.send_byte(slot[1])  # the actual Y
@@ -145,6 +148,8 @@ def dispense():
     dispense_status[tape_id_str] = "in_progress"
 
     # Send command immediately
+    serial_comm.clear_buffer()
+
     serial_comm.send_byte(COMMANDS["dispense"])
     serial_comm.send_byte(tape['slot_x'])
     serial_comm.send_byte(tape['slot_y'])
@@ -169,6 +174,8 @@ def return_tape():
     tape_id_str = str(tape_id)
     
     return_status[tape_id_str] = "homing"
+
+    serial_comm.clear_buffer()
 
     serial_comm.send_byte(COMMANDS["return"])
     serial_comm.send_byte(tape['slot_x'])
@@ -327,6 +334,8 @@ def handle_auto_organize(moves):
         auto_status["current"] = index + 1
 
         # Send SWITCH command
+        serial_comm.clear_buffer()
+        
         serial_comm.send_byte(COMMANDS["switch"])
 
         # Send FROM position
