@@ -5,7 +5,7 @@ import serial.tools.list_ports
 
 
 try:
-    ser = serial.Serial("/dev/serial0", 9600, timeout=1)
+    ser = serial.Serial("/dev/serial0", 9600, timeout=35)
     print("Connected to Arduino on GPIO UART")
 except serial.SerialException:
     ser = None
@@ -40,7 +40,7 @@ wait for next process based on the arduino message.
 '''
 def wait_for_arduino(expected_byte=0x4B): # 0x4B is ASCII 'K' for OK
     print("Waiting for Arduino confirmation...")
-    timeout = time.time() + 30  # 30 second timeout
+    timeout = time.time() + 35  # 35 second timeout
     
     while time.time() < timeout:
         received = receive_byte()
