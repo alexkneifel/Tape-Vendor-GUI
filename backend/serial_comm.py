@@ -2,6 +2,10 @@ import serial
 import time
 import struct
 import serial.tools.list_ports
+import threading
+
+# Create a lock object
+serial_lock = threading.Lock()
 
 
 try:
@@ -29,23 +33,21 @@ def clear_buffer():
         ser.reset_input_buffer()
         print("UART input buffer cleared.")
 
-def wait_for_arduino(expected_byte=0x4B): # 0x4B is ASCII 'K' for OK
-    print("Waiting for Arduino confirmation...")
-    timeout = time.time() + 35  # 35 second timeout
-    
-    while time.time() < timeout:
-        if ser and ser.is_open:
-            if ser.in_waiting > 0:
-                # Read ALL available bytes at once to clear traffic jams
-                incoming = ser.read(ser.in_waiting)
-                
-                # Check if our expected byte is anywhere in that chunk
-                for byte_value in incoming:
-                    print(f"UART RECEIVED BYTE: {hex(byte_value)}")
-                    if byte_value == expected_byte:
-                        return True
-                        
-        time.sleep(0.05) # Sleep 50ms (checks 20 times a second)
-        
-    print("UART TIMEOUT: Arduino did not respond in time.")
+def wait_for_arduino(expected_byte=0x4B):
+    # Use the lock so other threads have to wait their turn
+    with serial_lock:
+        print(f"Waiting for byte: {hex(expected_byte)}...")
+        timeout = time.time() + 35
+
+        while time.time() < timeout:
+            if ser and ser.is_open:
+                if ser.in_waiting > 0:
+                    incoming = ser.read(ser.in_waiting)
+
+                    for b in incoming:
+                        if b == expected_byte:
+                            return True
+            time.sleep(0.05)
+
+        print("UART TIMEOUT: Arduino did not respond in time.")
     return False

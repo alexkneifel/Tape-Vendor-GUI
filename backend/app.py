@@ -14,6 +14,9 @@ app = Flask(__name__, template_folder="../frontend", static_folder="../frontend"
 return_status = {}
 dispense_status = {}  # { tape_id: "in_progress" | "done" | "timeout" }
 
+processing_lock = threading.Lock()
+is_hardware_busy = False
+
 # Hardware Command Map
 COMMANDS = {
     "home": 0x01, "pickup": 0x02, "dropoff": 0x03, "goto": 0x04,
@@ -159,13 +162,16 @@ def dispense():
 
     return jsonify(status="started")
 
-
 '''
 When a tape is returned, it changes it to present in database.
 Option to send serial commands here since the tape is returned.
 '''
 @app.route("/api/return")
 def return_tape():
+    global is_hardware_busy
+    if is_hardware_busy:
+        return jsonify(status="Hardware is currently busy"), 429 # Busy error
+    
     tape_id = request.args.get('id')
     tape = db.get_tape_by_id(tape_id)
     if not tape:
@@ -181,40 +187,47 @@ def return_tape():
     serial_comm.send_byte(tape['slot_x'])
     serial_comm.send_byte(tape['slot_y'])
 
+    is_hardware_busy = True
     threading.Thread(target=handle_return, args=(tape_id, "return"), daemon=True).start()
 
     return jsonify(status="started")
 
 def handle_return(tape_id, type):
+    global is_hardware_busy
 
-    tape_id_str = str(tape_id)
+    try:
+        tape_id_str = str(tape_id)
 
-    return_status[tape_id_str] = "homing"
+        return_status[tape_id_str] = "homing"
 
-    if not serial_comm.wait_for_arduino():
-        return_status[tape_id_str] = "timeout"
-        if type == "add":
-            db.delete_cassette(tape_id)  # Remove the cassette entry if it was an add operation that failed
-        return
+        if not serial_comm.wait_for_arduino():
+            return_status[tape_id_str] = "timeout"
+            if type == "add":
+                db.delete_cassette(tape_id)  # Remove the cassette entry if it was an add operation that failed
+            return
 
-    return_status[tape_id_str] = "waiting_for_insert"
+        return_status[tape_id_str] = "waiting_for_insert"
 
-    if not serial_comm.wait_for_arduino():
-        return_status[tape_id_str] = "timeout"
-        if type == "add":
-            db.delete_cassette(tape_id)  
-        return
+        if not serial_comm.wait_for_arduino():
+            return_status[tape_id_str] = "timeout"
+            if type == "add":
+                db.delete_cassette(tape_id)  
+            return
 
-    return_status[tape_id_str] = "returning"
+        return_status[tape_id_str] = "returning"
 
-    if not serial_comm.wait_for_arduino():
-        return_status[tape_id_str] = "timeout"
-        if type == "add":
-            db.delete_cassette(tape_id)  
-        return
+        if not serial_comm.wait_for_arduino():
+            return_status[tape_id_str] = "timeout"
+            if type == "add":
+                db.delete_cassette(tape_id)  
+            return
 
-    db.update_status(tape_id, 1)
-    return_status[tape_id_str] = "done"
+        db.update_status(tape_id, 1)
+        return_status[tape_id_str] = "done"
+
+    finally:
+        # This ensures that even if there's an error, the hardware is "unlocked"
+        is_hardware_busy = False
 
 
 '''
@@ -335,7 +348,7 @@ def handle_auto_organize(moves):
 
         # Send SWITCH command
         serial_comm.clear_buffer()
-        
+
         serial_comm.send_byte(COMMANDS["switch"])
 
         # Send FROM position

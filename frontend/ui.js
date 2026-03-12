@@ -394,6 +394,8 @@ function closeModal()
  */
 async function actionTape(id, type) 
 {
+    const btn = document.activeElement; // Grab the button that was clicked
+    if (btn) btn.disabled = true;
     closeModal();
 
     // 1. Initial UI Kick-off
@@ -453,6 +455,7 @@ async function actionTape(id, type)
     // 5. Cleanup
     hideLoader();
     await loadData(); // Refresh the list to show the new tape or updated location
+    if (btn) btn.disabled = false;
 }
 
 /* =========================
