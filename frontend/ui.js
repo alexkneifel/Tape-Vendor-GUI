@@ -33,15 +33,19 @@ window.addEventListener('load', () => {
         }
     });
 
-    document.addEventListener('focusin', (e) => {
-        if (e.target.tagName === 'INPUT' && e.target.type !== 'number') {
+        document.addEventListener('focusin', (e) => {
+        // ONLY trigger if the input is a text-type (ignores checkboxes/numbers)
+        const isTextInput = e.target.tagName === 'INPUT' && 
+                           (e.target.type === 'text' || e.target.type === 'search' || !e.target.type);
+
+        if (isTextInput) {
             selectedInput = e.target;
             const wrapper = document.getElementById('keyboard-wrapper');
             const preview = document.getElementById('keyboard-preview');
             
             wrapper.style.display = 'block';
 
-            // HIDE preview for searchBar, SHOW for others (Add Cassette fields)
+            // HIDE preview for search boxes, SHOW for data entry (Add modal)
             if (selectedInput.id === 'searchBar' || selectedInput.id === 'removeSearch') {
                 if (preview) preview.style.display = 'none';
             } else {
