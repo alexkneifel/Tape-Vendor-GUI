@@ -6,7 +6,7 @@ let isGrid = false; // Track current view mode (List/Grid)
 let genreMode = "filter"; 
 
 /* =========================
-   VIRTUAL KEYBOARD LOGIC (PRO)
+   VIRTUAL KEYBOARD LOGIC
 ========================= */
 let keyboard;
 let selectedInput = null;
@@ -36,11 +36,21 @@ window.addEventListener('load', () => {
     document.addEventListener('focusin', (e) => {
         if (e.target.tagName === 'INPUT' && e.target.type !== 'number') {
             selectedInput = e.target;
-            document.getElementById('keyboard-wrapper').style.display = 'block';
+            const wrapper = document.getElementById('keyboard-wrapper');
+            const preview = document.getElementById('keyboard-preview');
             
-            // Set the Preview Label based on placeholder or ID
-            const label = selectedInput.placeholder || selectedInput.id.replace('add-', '');
-            updatePreview(label, selectedInput.value);
+            wrapper.style.display = 'block';
+
+            // HIDE preview for searchBar, SHOW for others (Add Cassette fields)
+            if (selectedInput.id === 'searchBar' || selectedInput.id === 'removeSearch') {
+                if (preview) preview.style.display = 'none';
+            } else {
+                if (preview) {
+                    preview.style.display = 'block';
+                    const label = selectedInput.placeholder || "INPUT";
+                    updatePreview(label, selectedInput.value);
+                }
+            }
 
             keyboard.setOptions({ inputName: e.target.id });
             keyboard.setInput(e.target.value);
@@ -59,9 +69,11 @@ function onKeyboardChange(input) {
     if (selectedInput) {
         selectedInput.value = input;
         
-        // Update the preview bar in real-time
-        const label = selectedInput.placeholder || selectedInput.id.replace('add-', '');
-        updatePreview(label, input);
+        // Only update preview if it's not a search bar
+        if (selectedInput.id !== 'searchBar' && selectedInput.id !== 'removeSearch') {
+            const label = selectedInput.placeholder || "INPUT";
+            updatePreview(label, input);
+        }
 
         selectedInput.dispatchEvent(new Event('input', { bubbles: true }));
         selectedInput.dispatchEvent(new Event('keyup', { bubbles: true }));
@@ -74,13 +86,14 @@ function onKeyboardKeyPress(button) {
     }
 
     if (button === "{enter}") {
-        // AUTO-NEXT LOGIC
-        if (selectedInput && selectedInput.id === "add-name") {
-            // Jump to Artist box
-            const artistInput = document.getElementById('add-artist');
-            if (artistInput) artistInput.focus();
+        // MATCHING IDs FROM index.html: newName -> newArtist
+        if (selectedInput && selectedInput.id === "newName") {
+            const artistInput = document.getElementById('newArtist');
+            if (artistInput) {
+                // Focus the next box. The focusin listener handles the rest.
+                artistInput.focus(); 
+            }
         } else {
-            // Otherwise, just close
             hideKeyboard();
         }
     }
