@@ -5,6 +5,67 @@ let currentTapes = [];
 let isGrid = false; // Track current view mode (List/Grid)
 let genreMode = "filter"; 
 
+/* =========================
+   VIRTUAL KEYBOARD SETUP
+========================= */
+let keyboard;
+let selectedInput = null;
+
+window.addEventListener('load', () => {
+    // Initialize the keyboard instance
+    const Keyboard = window.SimpleKeyboard.default;
+    keyboard = new Keyboard({
+        onChange: input => onKeyboardChange(input),
+        onKeyPress: button => onKeyboardKeyPress(button),
+        layout: {
+            'default': [
+                '1 2 3 4 5 6 7 8 9 0 {bksp}',
+                'Q W E R T Y U I O P',
+                'A S D F G H J K L {enter}',
+                'Z X C V B N M , . -',
+                '{space}'
+            ]
+        },
+        display: {
+            '{bksp}': 'DEL',
+            '{enter}': 'ENTER',
+            '{space}': 'SPACE'
+        }
+    });
+
+    // Attach focus events to text inputs to trigger the keyboard
+    const textInputs = document.querySelectorAll('input:not([type="number"])');
+    textInputs.forEach(input => {
+        input.addEventListener("focus", (e) => {
+            selectedInput = e.target;
+            document.getElementById('keyboard-wrapper').style.display = 'block';
+            keyboard.setOptions({ inputName: e.target.id });
+            keyboard.setInput(e.target.value);
+        });
+    });
+
+    // Hide keyboard if tapping completely outside of an input or the keyboard itself
+    document.addEventListener('click', (e) => {
+        if (!e.target.matches('input') && !e.target.closest('#keyboard-wrapper')) {
+            document.getElementById('keyboard-wrapper').style.display = 'none';
+        }
+    });
+});
+
+function onKeyboardChange(input) {
+    if (selectedInput) {
+        selectedInput.value = input;
+        // This ensures your search filter functions still trigger as you type
+        selectedInput.dispatchEvent(new Event('keyup'));
+    }
+}
+
+function onKeyboardKeyPress(button) {
+    if (button === "{enter}") {
+        document.getElementById('keyboard-wrapper').style.display = 'none';
+        if (selectedInput) selectedInput.blur();
+    }
+}
 
 /* =========================
    0. Boot Screen Animation
