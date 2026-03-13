@@ -6,111 +6,81 @@ let isGrid = false; // Track current view mode (List/Grid)
 let genreMode = "filter"; 
 
 /* =========================
-VIRTUAL KEYBOARD LOGIC
+   VIRTUAL KEYBOARD LOGIC (STABLE)
 ========================= */
-
 let keyboard;
 let selectedInput = null;
 
 window.addEventListener('load', () => {
-const Keyboard = window.SimpleKeyboard.default;
+    const Keyboard = window.SimpleKeyboard.default;
 
-keyboard = new Keyboard({
-    onChange: input => onKeyboardChange(input),
-    onKeyPress: button => onKeyboardKeyPress(button),
-    layout: {
-        'default': [
-            '1 2 3 4 5 6 7 8 9 0 {bksp}',
-            'Q W E R T Y U I O P',
-            'A S D F G H J K L {enter}',
-            'Z X C V B N M , . {close}',
-            '{space}'
-        ]
-    },
-    display: {
-        '{bksp}': 'DEL',
-        '{enter}': 'ENT',
-        '{space}': 'SPACE',
-        '{close}': 'CLOSE'
-    }
-});
-
-const textInputs = document.querySelectorAll('input:not([type="number"])');
-
-textInputs.forEach(input => {
-
-    // Open keyboard when input gains focus
-    input.addEventListener("focus", (e) => {
-        selectedInput = e.target;
-
-        const keyboardWrapper = document.getElementById('keyboard-wrapper');
-        keyboardWrapper.style.display = 'block';
-
-        keyboard.setOptions({ inputName: e.target.id });
-        keyboard.setInput(e.target.value);
+    keyboard = new Keyboard({
+        onChange: input => onKeyboardChange(input),
+        onKeyPress: button => onKeyboardKeyPress(button),
+        layout: {
+            'default': [
+                '1 2 3 4 5 6 7 8 9 0 {bksp}',
+                'Q W E R T Y U I O P',
+                'A S D F G H J K L {enter}',
+                'Z X C V B N M , . {close}',
+                '{space}'
+            ]
+        },
+        display: {
+            '{bksp}': 'DEL',
+            '{enter}': 'ENT',
+            '{space}': 'SPACE',
+            '{close}': 'CLOSE'
+        }
     });
 
-    // Prevent click from closing keyboard
-    input.addEventListener("click", (e) => {
-        e.stopPropagation();
+    // 1. WATCH FOR FOCUS (Using Delegation)
+    // This catches inputs in modals even if they were hidden/shown
+    document.addEventListener('focusin', (e) => {
+        if (e.target.tagName === 'INPUT' && e.target.type !== 'number') {
+            selectedInput = e.target;
+            document.getElementById('keyboard-wrapper').style.display = 'block';
+            keyboard.setOptions({ inputName: e.target.id });
+            keyboard.setInput(e.target.value);
+        }
     });
 
-});
-
-// Close keyboard when tapping outside
-document.addEventListener('click', (e) => {
-
-    const keyboardWrapper = document.getElementById('keyboard-wrapper');
-    const keyboardVisible = keyboardWrapper.style.display === 'block';
-
-    if (
-        keyboardVisible &&
-        !e.target.closest('#keyboard-wrapper') &&
-        !e.target.closest('input')
-    ) {
-        hideKeyboard();
-    }
-
-});
-
-
+    // 2. WATCH FOR CLOCKS TO CLOSE
+    document.addEventListener('click', (e) => {
+        const isInput = e.target.tagName === 'INPUT';
+        const isKeyboard = e.target.closest('#keyboard-wrapper');
+        
+        // Only close if we didn't tap an input AND didn't tap the keyboard itself
+        if (!isInput && !isKeyboard) {
+            hideKeyboard();
+        }
+    });
 });
 
 function hideKeyboard() {
-
-const keyboardWrapper = document.getElementById('keyboard-wrapper');
-keyboardWrapper.style.display = 'none';
-
-if (selectedInput) {
-    selectedInput.blur();
-    selectedInput = null;
-}
-
-
+    const keyboardWrapper = document.getElementById('keyboard-wrapper');
+    if (keyboardWrapper) keyboardWrapper.style.display = 'none';
+    
+    if (selectedInput) {
+        selectedInput.blur();
+        selectedInput = null;
+    }
 }
 
 function onKeyboardChange(input) {
-
-
-if (selectedInput) {
-    selectedInput.value = input;
-    selectedInput.dispatchEvent(new Event('keyup'));
-}
-
-
+    if (selectedInput) {
+        selectedInput.value = input;
+        // Trigger search filtering/validation as you type
+        selectedInput.dispatchEvent(new Event('input', { bubbles: true }));
+        selectedInput.dispatchEvent(new Event('keyup', { bubbles: true }));
+    }
 }
 
 function onKeyboardKeyPress(button) {
-
-
-if (button === "{enter}" || button === "{close}") {
-    hideKeyboard();
+    if (button === "{enter}" || button === "{close}") {
+        hideKeyboard();
+    }
 }
-
-
-}
-
-
 
 /* =========================
    0. Boot Screen Animation
