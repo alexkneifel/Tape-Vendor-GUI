@@ -1044,6 +1044,18 @@ button:active::after {
     min-width: 0 !important; 
 }
 
+/* Target the specific Close button */
+.hg-button[data-skbtn="{close}"] {
+    background: #444 !important; /* Darker grey to distinguish it */
+    color: #ffffff !important;
+    border-color: #666 !important;
+    max-width: 120px !important;
+}
+
+.hg-button[data-skbtn="{close}"]:active {
+    background: #ff4400 !important; /* Brief flash of red/orange when closing */
+}
+
 /* --- 10-SECOND SEQUENCED ANIMATIONS --- */
 
 @keyframes monochrome-static-sequence {
