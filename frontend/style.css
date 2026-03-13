@@ -985,8 +985,38 @@ button:active::after {
 }
 
 ::-webkit-scrollbar-thumb:active {
-    background: #ff4400; /* Turns red when dragged */
-    box-shadow: inset 0 0 0 2px #ff0000;
+    background: #ff9d00; /* Full orange when grabbed */
+    box-shadow: inset 0 0 0 2px #222;
+}
+
+/* =========================
+   VIRTUAL KEYBOARD STYLING
+========================= */
+.hg-theme-default {
+    background-color: transparent !important;
+    font-family: 'Share Tech Mono', monospace !important;
+}
+
+.hg-theme-default .hg-button {
+    background: #222 !important;
+    color: #ff9d00 !important;
+    border: 2px solid #444 !important;
+    box-shadow: 0 4px 0 #111 !important;
+    height: 60px !important; 
+    
+    /* Font Weight Upgrades */
+    font-size: 1.6rem !important; /* Slightly larger */
+    font-weight: bold !important; /* Forces the font to its thickest weight */
+    text-shadow: 2px 2px 0px #000 !important; /* Drops a heavy shadow for contrast */
+    text-transform: uppercase;
+}
+
+.hg-theme-default .hg-button:active {
+    transform: translateY(4px) !important;
+    box-shadow: 0 0 0 #111 !important;
+    background: #ff4400 !important;
+    color: #fff !important;
+    border-color: #ff0000 !important;
 }
 
 /* --- 10-SECOND SEQUENCED ANIMATIONS --- */
