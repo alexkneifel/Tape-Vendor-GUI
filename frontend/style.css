@@ -1019,6 +1019,31 @@ button:active::after {
     border-color: #ff0000 !important;
 }
 
+#keyboard-wrapper {
+    /* Ensure the wrapper itself doesn't bleed over */
+    box-sizing: border-box !important;
+    padding: 10px 20px !important; /* Extra padding on the right/left */
+}
+
+.simple-keyboard {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* Ensure the rows inside the keyboard don't exceed the container */
+.hg-row {
+    display: flex !important;
+    width: 100% !important;
+    margin-bottom: 5px !important;
+}
+
+.hg-button {
+    /* This ensures buttons shrink to fit the row rather than pushing it out */
+    flex-grow: 1 !important;
+    min-width: 0 !important; 
+}
+
 /* --- 10-SECOND SEQUENCED ANIMATIONS --- */
 
 @keyframes monochrome-static-sequence {
