@@ -6,66 +6,75 @@ let isGrid = false; // Track current view mode (List/Grid)
 let genreMode = "filter"; 
 
 /* =========================
-   VIRTUAL KEYBOARD SETUP
+   FIXED VIRTUAL KEYBOARD LOGIC
 ========================= */
 let keyboard;
 let selectedInput = null;
 
 window.addEventListener('load', () => {
-    // Initialize the keyboard instance
     const Keyboard = window.SimpleKeyboard.default;
-keyboard = new Keyboard({
-    onChange: input => onKeyboardChange(input),
-    onKeyPress: button => onKeyboardKeyPress(button),
-    layout: {
-        'default': [
-            '1 2 3 4 5 6 7 8 9 0 {bksp}',
-            'Q W E R T Y U I O P',
-            'A S D F G H J K L {enter}',
-            'Z X C V B N M , . {close}', // Replaced dash with close
-            '{space}'
-        ]
-    },
-    display: {
-        '{bksp}': 'DEL',
-        '{enter}': 'ENT',
-        '{space}': 'SPACE',
-        '{close}': 'CLOSE' // Label for the new button
-    }
-});
+    keyboard = new Keyboard({
+        onChange: input => onKeyboardChange(input),
+        onKeyPress: button => onKeyboardKeyPress(button),
+        layout: {
+            'default': [
+                '1 2 3 4 5 6 7 8 9 0 {bksp}',
+                'Q W E R T Y U I O P',
+                'A S D F G H J K L {enter}',
+                'Z X C V B N M , . {close}', // Added Close button here
+                '{space}'
+            ]
+        },
+        display: {
+            '{bksp}': 'DEL',
+            '{enter}': 'ENT',
+            '{space}': 'SPACE',
+            '{close}': 'CLOSE'
+        }
+    });
 
-    // Attach focus events to text inputs to trigger the keyboard
     const textInputs = document.querySelectorAll('input:not([type="number"])');
     textInputs.forEach(input => {
+        // Use FOCUS to open. This is more reliable for touchscreens.
         input.addEventListener("focus", (e) => {
             selectedInput = e.target;
             document.getElementById('keyboard-wrapper').style.display = 'block';
             keyboard.setOptions({ inputName: e.target.id });
             keyboard.setInput(e.target.value);
         });
+
+        // Crucial: Stops the tap from bubbling up to the document "click" listener
+        input.addEventListener("click", (e) => {
+            e.stopPropagation();
+        });
     });
 
-    // Hide keyboard if tapping completely outside of an input or the keyboard itself
+    // Close keyboard when tapping background (but not on inputs)
     document.addEventListener('click', (e) => {
-        if (!e.target.matches('input') && !e.target.closest('#keyboard-wrapper')) {
-            document.getElementById('keyboard-wrapper').style.display = 'none';
+        if (!e.target.closest('#keyboard-wrapper') && !e.target.matches('input')) {
+            hideKeyboard();
         }
     });
 });
 
+function hideKeyboard() {
+    document.getElementById('keyboard-wrapper').style.display = 'none';
+    if (selectedInput) {
+        selectedInput.blur(); // Remove cursor from input
+        selectedInput = null;
+    }
+}
+
 function onKeyboardChange(input) {
     if (selectedInput) {
         selectedInput.value = input;
-        // This ensures your search filter functions still trigger as you type
         selectedInput.dispatchEvent(new Event('keyup'));
     }
 }
 
-// Update the key press function to handle the close button
 function onKeyboardKeyPress(button) {
     if (button === "{enter}" || button === "{close}") {
-        document.getElementById('keyboard-wrapper').style.display = 'none';
-        if (selectedInput) selectedInput.blur();
+        hideKeyboard();
     }
 }
 
