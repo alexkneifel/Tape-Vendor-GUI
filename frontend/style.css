@@ -1025,6 +1025,31 @@ button:active::after {
     padding: 10px 20px !important; /* Extra padding on the right/left */
 }
 
+#keyboard-preview {
+    background: #000;
+    color: #ff9d00;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1.4rem;
+    padding: 10px 15px;
+    border-bottom: 2px solid #333;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-height: 1.5rem;
+}
+
+/* Add a blinking cursor effect to the preview */
+#keyboard-preview::after {
+    content: "_";
+    animation: blink 1s steps(2) infinite;
+}
+
+@keyframes blink {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
 .simple-keyboard {
     width: 100% !important;
     max-width: 100% !important;

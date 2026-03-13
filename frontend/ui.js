@@ -6,14 +6,13 @@ let isGrid = false; // Track current view mode (List/Grid)
 let genreMode = "filter"; 
 
 /* =========================
-   VIRTUAL KEYBOARD LOGIC (STABLE KIOSK MODE)
+   VIRTUAL KEYBOARD LOGIC (PRO)
 ========================= */
 let keyboard;
 let selectedInput = null;
 
 window.addEventListener('load', () => {
     const Keyboard = window.SimpleKeyboard.default;
-
     keyboard = new Keyboard({
         onChange: input => onKeyboardChange(input),
         onKeyPress: button => onKeyboardKeyPress(button),
@@ -34,43 +33,65 @@ window.addEventListener('load', () => {
         }
     });
 
-    // We use focusin at the document level to catch inputs inside modals reliably
     document.addEventListener('focusin', (e) => {
         if (e.target.tagName === 'INPUT' && e.target.type !== 'number') {
             selectedInput = e.target;
-            const wrapper = document.getElementById('keyboard-wrapper');
-            wrapper.style.display = 'block';
+            document.getElementById('keyboard-wrapper').style.display = 'block';
             
-            // Sync keyboard with current input value
+            // Set the Preview Label based on placeholder or ID
+            const label = selectedInput.placeholder || selectedInput.id.replace('add-', '');
+            updatePreview(label, selectedInput.value);
+
             keyboard.setOptions({ inputName: e.target.id });
             keyboard.setInput(e.target.value);
         }
     });
 });
 
-function hideKeyboard() {
-    const keyboardWrapper = document.getElementById('keyboard-wrapper');
-    if (keyboardWrapper) keyboardWrapper.style.display = 'none';
-    
-    if (selectedInput) {
-        selectedInput.blur(); // Remove cursor
-        selectedInput = null;
+function updatePreview(label, value) {
+    const preview = document.getElementById('keyboard-preview');
+    if (preview) {
+        preview.innerText = `${label.toUpperCase()}: ${value}`;
     }
 }
 
 function onKeyboardChange(input) {
     if (selectedInput) {
         selectedInput.value = input;
-        // This ensures the search filters update in real-time as you type
+        
+        // Update the preview bar in real-time
+        const label = selectedInput.placeholder || selectedInput.id.replace('add-', '');
+        updatePreview(label, input);
+
         selectedInput.dispatchEvent(new Event('input', { bubbles: true }));
         selectedInput.dispatchEvent(new Event('keyup', { bubbles: true }));
     }
 }
 
 function onKeyboardKeyPress(button) {
-    // Keyboard only closes when ENT or CLOSE is explicitly pressed
-    if (button === "{enter}" || button === "{close}") {
+    if (button === "{close}") {
         hideKeyboard();
+    }
+
+    if (button === "{enter}") {
+        // AUTO-NEXT LOGIC
+        if (selectedInput && selectedInput.id === "add-name") {
+            // Jump to Artist box
+            const artistInput = document.getElementById('add-artist');
+            if (artistInput) artistInput.focus();
+        } else {
+            // Otherwise, just close
+            hideKeyboard();
+        }
+    }
+}
+
+function hideKeyboard() {
+    const wrapper = document.getElementById('keyboard-wrapper');
+    if (wrapper) wrapper.style.display = 'none';
+    if (selectedInput) {
+        selectedInput.blur();
+        selectedInput = null;
     }
 }
 
