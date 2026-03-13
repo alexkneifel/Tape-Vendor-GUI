@@ -45,22 +45,6 @@ keyboard = new Keyboard({
         });
     });
 
-    textInputs.forEach(input => {
-    input.addEventListener("click", (e) => {
-        const wrapper = document.getElementById('keyboard-wrapper');
-        // If keyboard is already open for THIS input, close it
-        if (wrapper.style.display === 'block' && selectedInput === e.target) {
-            wrapper.style.display = 'none';
-            e.target.blur();
-        } else {
-            selectedInput = e.target;
-            wrapper.style.display = 'block';
-            keyboard.setOptions({ inputName: e.target.id });
-            keyboard.setInput(e.target.value);
-        }
-    });
-});
-
     // Hide keyboard if tapping completely outside of an input or the keyboard itself
     document.addEventListener('click', (e) => {
         if (!e.target.matches('input') && !e.target.closest('#keyboard-wrapper')) {
