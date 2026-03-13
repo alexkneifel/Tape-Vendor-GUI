@@ -6,7 +6,7 @@ let isGrid = false; // Track current view mode (List/Grid)
 let genreMode = "filter"; 
 
 /* =========================
-   VIRTUAL KEYBOARD LOGIC (STABLE)
+   VIRTUAL KEYBOARD LOGIC (STABLE KIOSK MODE)
 ========================= */
 let keyboard;
 let selectedInput = null;
@@ -34,25 +34,16 @@ window.addEventListener('load', () => {
         }
     });
 
-    // 1. WATCH FOR FOCUS (Using Delegation)
-    // This catches inputs in modals even if they were hidden/shown
+    // We use focusin at the document level to catch inputs inside modals reliably
     document.addEventListener('focusin', (e) => {
         if (e.target.tagName === 'INPUT' && e.target.type !== 'number') {
             selectedInput = e.target;
-            document.getElementById('keyboard-wrapper').style.display = 'block';
+            const wrapper = document.getElementById('keyboard-wrapper');
+            wrapper.style.display = 'block';
+            
+            // Sync keyboard with current input value
             keyboard.setOptions({ inputName: e.target.id });
             keyboard.setInput(e.target.value);
-        }
-    });
-
-    // 2. WATCH FOR CLOCKS TO CLOSE
-    document.addEventListener('click', (e) => {
-        const isInput = e.target.tagName === 'INPUT';
-        const isKeyboard = e.target.closest('#keyboard-wrapper');
-        
-        // Only close if we didn't tap an input AND didn't tap the keyboard itself
-        if (!isInput && !isKeyboard) {
-            hideKeyboard();
         }
     });
 });
@@ -62,7 +53,7 @@ function hideKeyboard() {
     if (keyboardWrapper) keyboardWrapper.style.display = 'none';
     
     if (selectedInput) {
-        selectedInput.blur();
+        selectedInput.blur(); // Remove cursor
         selectedInput = null;
     }
 }
@@ -70,13 +61,14 @@ function hideKeyboard() {
 function onKeyboardChange(input) {
     if (selectedInput) {
         selectedInput.value = input;
-        // Trigger search filtering/validation as you type
+        // This ensures the search filters update in real-time as you type
         selectedInput.dispatchEvent(new Event('input', { bubbles: true }));
         selectedInput.dispatchEvent(new Event('keyup', { bubbles: true }));
     }
 }
 
 function onKeyboardKeyPress(button) {
+    // Keyboard only closes when ENT or CLOSE is explicitly pressed
     if (button === "{enter}" || button === "{close}") {
         hideKeyboard();
     }
