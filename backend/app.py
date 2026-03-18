@@ -368,7 +368,7 @@ if __name__ == "__main__":
         if os.path.exists(KIOSK_PROFILE):
             shutil.rmtree(KIOSK_PROFILE)
 
-        time.sleep(1)  # wait for server to start
+        time.sleep(2)  # wait for server to start
 
         subprocess.Popen([
             "chromium",
