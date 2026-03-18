@@ -379,6 +379,7 @@ if __name__ == "__main__":
             "--disable-infobars",
             "--disable-gpu",
             "--disable-software-rasterizer",
+            "--password-store=basic",
             f"--user-data-dir={KIOSK_PROFILE}",
             "http://127.0.0.1:5000"
         ])
@@ -386,5 +387,5 @@ if __name__ == "__main__":
 
     # Start Chromium in a separate thread
     threading.Thread(target=start_kiosk).start()
-    app.run(host="0.0.0.0", port=5000, debug=True, threaded=True)
+    app.run(host="0.0.0.0", port=5000, debug=False, threaded=True)
 
