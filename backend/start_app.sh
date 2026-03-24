@@ -1,4 +1,5 @@
 #!/bin/bash
+sleep 10
 
 # Export display so Chromium knows where to render
 export DISPLAY=:0 
