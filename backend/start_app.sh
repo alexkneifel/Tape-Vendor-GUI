@@ -1,6 +1,4 @@
 #!/bin/bash
-# Wait for the desktop to fully load
-sleep 10 
 
 # Export display so Chromium knows where to render
 export DISPLAY=:0 
