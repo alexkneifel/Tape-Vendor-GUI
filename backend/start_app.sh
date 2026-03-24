@@ -3,6 +3,9 @@
 # Export display so Chromium knows where to render
 export DISPLAY=:0 
 
+# Hide the cursor immediately (0 second idle time)
+unclutter -idle 0 &
+
 # Navigate to the project directory
 cd /home/alex/Desktop/Tape-Vendor-GUI/backend
 
