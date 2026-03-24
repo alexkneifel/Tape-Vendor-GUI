@@ -373,6 +373,7 @@ if __name__ == "__main__":
         subprocess.Popen([
             "chromium",
             "--kiosk",
+            "--no-cursor",
             "--incognito",
             "--noerrdialogs",
             "--disable-session-crashed-bubble",

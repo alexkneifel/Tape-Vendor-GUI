@@ -11,6 +11,8 @@ html, body {
     background-size: 20px 20px;
     color: #e0e0e0;
     overflow: hidden;
+
+    cursor: none !important;
 }
 
 /* =========================
