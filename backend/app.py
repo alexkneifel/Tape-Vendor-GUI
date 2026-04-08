@@ -368,14 +368,6 @@ if __name__ == "__main__":
         if os.path.exists(KIOSK_PROFILE):
             shutil.rmtree(KIOSK_PROFILE)
         
-        try:
-            print("Sending HOME command to hardware on boot...")
-            serial_comm.clear_buffer()
-            serial_comm.send_byte(COMMANDS["home"])
-        except Exception as e:
-            print(f"Error homing on boot: {e}")
-
-        time.sleep(2)  # wait for server to start
 
         subprocess.Popen([
             "chromium",
